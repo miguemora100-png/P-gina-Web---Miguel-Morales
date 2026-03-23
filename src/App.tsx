@@ -110,11 +110,14 @@ function MainApp() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isSubscribing, setIsSubscribing] = useState(false);
   const [selectedSynopsis, setSelectedSynopsis] = useState<{ title: string; content: string } | null>(null);
   const [bookFilter, setBookFilter] = useState<"all" | "new" | "soon">("all");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [isSent, setIsSent] = useState(false);
   const [authorPhoto, setAuthorPhoto] = useState<string | null>("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400&h=400");
   const [publisherSeal, setPublisherSeal] = useState<string | null>(null);
   const [bookData, setBookData] = useState<Record<string, { coverUrl?: string; spineColor?: string; coverUrlEn?: string; spineColorEn?: string }>>({});
@@ -355,6 +358,8 @@ function MainApp() {
 
   const isAdmin = user?.email === "miguemora100@gmail.com";
 
+  const [selectedTrailer, setSelectedTrailer] = useState<string | null>(null);
+
   const t = {
     es: {
       nav: ["Inicio", "Libros", "Autor", "Trailers", "Prensa", "Reseñas", "Contacto"],
@@ -528,12 +533,12 @@ function MainApp() {
   const bookTrailers = [
     {
       title: "El Señuelo",
-      videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", // Placeholder
+      videoUrl: "https://drive.google.com/file/d/1YkKdgBMEkYGrgbTXQsc0G59RCT6Ew8Ho/preview",
       thumbnail: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&q=80&w=1280&h=720"
     },
     {
       title: "El Efecto Strauss",
-      videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", // Placeholder
+      videoUrl: "", // Removed placeholder
       thumbnail: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=1280&h=720"
     }
   ];
@@ -892,8 +897,8 @@ function MainApp() {
               className="group rounded-[2.5rem] border border-white/5 bg-white/[0.02] p-8 shadow-xl shadow-black/20 transition hover:bg-white/[0.04] hover:border-white/10"
             >
               <div className="grid gap-12 md:grid-cols-[200px_1fr] md:items-start">
-                <div className="relative group/book-card [perspective:3000px] w-full max-w-[220px] mx-auto md:mx-0 py-8">
-                  <div className="relative aspect-[2/3.2] w-full transition-all duration-1000 [transform-style:preserve-3d] [transform:rotateY(-8deg)_rotateX(1deg)] group-hover/book-card:[transform:rotateY(-18deg)_rotateX(3deg)_translateZ(30px)]">
+                <div className={`relative group/book-card [perspective:3000px] w-full max-w-[220px] mx-auto md:mx-0 py-8 ${book.id === 'el-efecto-strauss' ? 'after:absolute after:inset-0 after:bg-white/5 after:blur-3xl after:rounded-full after:opacity-20 after:pointer-events-none' : ''}`}>
+                  <div className={`relative aspect-[2/3.2] w-full transition-all duration-1000 [transform-style:preserve-3d] [transform:rotateY(-8deg)_rotateX(1deg)] group-hover/book-card:[transform:rotateY(-18deg)_rotateX(3deg)_translateZ(30px)] ${book.id === 'el-efecto-strauss' ? 'ring-1 ring-white/20' : ''}`}>
                     {/* Front Cover */}
                     <div className="absolute inset-0 z-20 rounded-r-[2px] overflow-hidden border-y border-r border-white/10 shadow-2xl [transform:translateZ(20px)]">
                       <img
@@ -938,6 +943,14 @@ function MainApp() {
                       {/* Lighting effects */}
                       <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 opacity-30 group-hover:opacity-50 transition-opacity duration-700" />
                       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.05),transparent_70%)]" />
+                      
+                      {/* Special Shine for El Efecto Strauss */}
+                      {book.id === "el-efecto-strauss" && (
+                        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-[30deg] animate-shine" />
+                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_50%)] animate-pulse" />
+                        </div>
+                      )}
                     </div>
                     
                     {/* Spine */}
@@ -979,14 +992,16 @@ function MainApp() {
                 </div>
                 <div>
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-3xl font-bold tracking-tight font-serif">
+                    <h3 className={`text-3xl font-bold tracking-tight font-serif ${book.id === 'el-efecto-strauss' ? 'bg-gradient-to-r from-white via-white/80 to-white bg-clip-text text-transparent' : ''}`}>
                       {language === "es" ? book.title : book.titleEn}
                     </h3>
                     {book.status === "new" && (
                       <span className="px-2 py-0.5 rounded-full bg-white text-neutral-950 text-[8px] font-black uppercase tracking-wider">New</span>
                     )}
                     {book.status === "soon" && (
-                      <span className="px-2 py-0.5 rounded-full border border-white/20 text-white text-[8px] font-black uppercase tracking-wider">Soon</span>
+                      <span className={`px-2 py-0.5 rounded-full border border-white/20 text-white text-[8px] font-black uppercase tracking-wider ${book.id === 'el-efecto-strauss' ? 'bg-white/10 animate-pulse' : ''}`}>
+                        {language === "es" ? "Próximamente" : "Soon"}
+                      </span>
                     )}
                   </div>
                   <p className="mt-2 text-[10px] uppercase tracking-[0.25em] text-neutral-500 font-black">
@@ -997,7 +1012,7 @@ function MainApp() {
                   </p>
                   <div className="mt-8 flex flex-wrap items-center gap-4">
                     {book.status === "soon" ? (
-                      <span className="inline-block rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-bold text-neutral-500 cursor-not-allowed">
+                      <span className={`inline-block rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-bold text-neutral-500 cursor-not-allowed ${book.id === 'el-efecto-strauss' ? 'shadow-[0_0_20px_rgba(255,255,255,0.05)]' : ''}`}>
                         {language === "es" ? book.cta : book.ctaEn}
                       </span>
                     ) : (
@@ -1140,17 +1155,29 @@ function MainApp() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                className="group relative aspect-video rounded-[2rem] overflow-hidden border border-white/10 bg-black shadow-2xl cursor-pointer"
+                onClick={() => trailer.videoUrl && setSelectedTrailer(trailer.videoUrl)}
+                className={`group relative aspect-video rounded-[2rem] overflow-hidden border border-white/10 bg-black shadow-2xl ${trailer.videoUrl ? 'cursor-pointer' : 'cursor-default'}`}
               >
                 <img 
                   src={trailer.thumbnail} 
                   alt={trailer.title}
-                  className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-all duration-700 group-hover:scale-110"
+                  className={`absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-all duration-700 group-hover:scale-110 ${trailer.title === "El Efecto Strauss" ? "animate-pulse" : ""}`}
                 />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:scale-110 group-hover:bg-white group-hover:text-black transition-all duration-500">
-                    <Play size={32} fill="currentColor" />
+                {trailer.title === "El Efecto Strauss" && (
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-[30deg] animate-shine" />
                   </div>
+                )}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {trailer.videoUrl ? (
+                    <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:scale-110 group-hover:bg-white group-hover:text-black transition-all duration-500">
+                      <Play size={32} fill="currentColor" />
+                    </div>
+                  ) : (
+                    <div className="px-6 py-2 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-xs uppercase tracking-widest text-white/50">
+                      Próximamente
+                    </div>
+                  )}
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent flex items-end p-8">
                   <div>
@@ -1307,35 +1334,76 @@ function MainApp() {
             viewport={{ once: true }}
             className="p-10 rounded-[3rem] border border-white/10 bg-neutral-950 shadow-2xl"
           >
-            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-              <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-[0.3em] text-neutral-500 font-black ml-2">{ui.name}</label>
-                <input
-                  type="text"
-                  placeholder="John Doe"
-                  className="w-full rounded-2xl border border-white/5 bg-white/[0.03] px-6 py-4 outline-none placeholder:text-neutral-700 focus:border-white/20 transition-colors"
-                />
+            {isSent ? (
+              <div className="h-full flex flex-col items-center justify-center text-center py-10 space-y-6">
+                <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center text-white">
+                  <Send size={32} />
+                </div>
+                <h3 className="text-2xl font-bold font-serif">{language === "es" ? "¡Mensaje enviado!" : "Message sent!"}</h3>
+                <p className="text-neutral-400">
+                  {language === "es" ? "Gracias por contactar. Te responderé lo antes posible." : "Thanks for reaching out. I'll get back to you as soon as possible."}
+                </p>
+                <button 
+                  onClick={() => setIsSent(false)}
+                  className="text-xs uppercase tracking-widest text-white/50 hover:text-white transition-colors"
+                >
+                  {language === "es" ? "Enviar otro mensaje" : "Send another message"}
+                </button>
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-[0.3em] text-neutral-500 font-black ml-2">{ui.email}</label>
-                <input
-                  type="email"
-                  placeholder="john@example.com"
-                  className="w-full rounded-2xl border border-white/5 bg-white/[0.03] px-6 py-4 outline-none placeholder:text-neutral-700 focus:border-white/20 transition-colors"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-[0.3em] text-neutral-500 font-black ml-2">{ui.message}</label>
-                <textarea
-                  placeholder="..."
-                  rows={4}
-                  className="w-full rounded-2xl border border-white/5 bg-white/[0.03] px-6 py-4 outline-none placeholder:text-neutral-700 focus:border-white/20 transition-colors resize-none"
-                />
-              </div>
-              <button className="w-full rounded-full bg-white py-5 text-sm font-bold text-neutral-950 hover:scale-[1.02] active:scale-95 transition-all">
-                {ui.send}
-              </button>
-            </form>
+            ) : (
+              <form 
+                className="space-y-6" 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setIsSending(true);
+                  setTimeout(() => {
+                    setIsSending(false);
+                    setIsSent(true);
+                  }, 1500);
+                }}
+              >
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-[0.3em] text-neutral-500 font-black ml-2">{ui.name}</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="John Doe"
+                    className="w-full rounded-2xl border border-white/5 bg-white/[0.03] px-6 py-4 outline-none placeholder:text-neutral-700 focus:border-white/20 transition-colors"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-[0.3em] text-neutral-500 font-black ml-2">{ui.email}</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="john@example.com"
+                    className="w-full rounded-2xl border border-white/5 bg-white/[0.03] px-6 py-4 outline-none placeholder:text-neutral-700 focus:border-white/20 transition-colors"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-[0.3em] text-neutral-500 font-black ml-2">{ui.message}</label>
+                  <textarea
+                    required
+                    placeholder="..."
+                    rows={4}
+                    className="w-full rounded-2xl border border-white/5 bg-white/[0.03] px-6 py-4 outline-none placeholder:text-neutral-700 focus:border-white/20 transition-colors resize-none"
+                  />
+                </div>
+                <button 
+                  disabled={isSending}
+                  className="w-full rounded-full bg-white py-5 text-sm font-bold text-neutral-950 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isSending ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-neutral-950/20 border-t-neutral-950 rounded-full animate-spin" />
+                      {language === "es" ? "Enviando..." : "Sending..."}
+                    </>
+                  ) : (
+                    ui.send
+                  )}
+                </button>
+              </form>
+            )}
           </motion.div>
         </div>
       </section>
@@ -1375,31 +1443,78 @@ function MainApp() {
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (newsletterEmail) {
-                    setIsSubscribed(true);
-                    setNewsletterEmail("");
+                    setIsSubscribing(true);
+                    setTimeout(() => {
+                      setIsSubscribing(false);
+                      setIsSubscribed(true);
+                      setNewsletterEmail("");
+                    }, 1200);
                   }
                 }}
               >
                 <input 
                   type="email" 
                   required
+                  disabled={isSubscribing}
                   value={newsletterEmail}
                   onChange={(e) => setNewsletterEmail(e.target.value)}
                   placeholder={ui.newsletterPlaceholder}
-                  className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-6 py-4 outline-none focus:border-white/30 transition-colors"
+                  className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-6 py-4 outline-none focus:border-white/30 transition-colors disabled:opacity-50"
                 />
                 <button 
                   type="submit"
-                  className="rounded-2xl bg-white px-8 py-4 text-sm font-bold text-neutral-950 hover:scale-105 transition-transform flex items-center justify-center gap-2"
+                  disabled={isSubscribing}
+                  className="rounded-2xl bg-white px-8 py-4 text-sm font-bold text-neutral-950 hover:scale-105 transition-transform flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {ui.newsletterButton}
-                  <Send size={16} />
+                  {isSubscribing ? (
+                    <div className="w-4 h-4 border-2 border-neutral-950/20 border-t-neutral-950 rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      {ui.newsletterButton}
+                      <Send size={16} />
+                    </>
+                  )}
                 </button>
               </form>
             )}
           </motion.div>
         </div>
       </section>
+
+      {/* Video Modal */}
+      <AnimatePresence>
+        {selectedTrailer && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 bg-black/90 backdrop-blur-xl"
+            onClick={() => setSelectedTrailer(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="relative w-full max-w-6xl aspect-video rounded-3xl overflow-hidden bg-neutral-900 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setSelectedTrailer(null)}
+                className="absolute top-6 right-6 z-10 w-12 h-12 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white hover:bg-white hover:text-black transition-all"
+              >
+                <X size={24} />
+              </button>
+              <iframe
+                src={selectedTrailer}
+                title="Booktrailer"
+                className="w-full h-full border-none"
+                allow="autoplay; fullscreen"
+                allowFullScreen
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Footer */}
       <motion.footer 

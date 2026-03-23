@@ -11,3 +11,15 @@
     scroll-behavior: smooth;
   }
 }
+
+@keyframes shine {
+  0% { transform: translateX(-100%) skewX(-30deg); opacity: 0; }
+  20% { opacity: 0.5; }
+  50% { opacity: 0.5; }
+  80% { opacity: 0; }
+  100% { transform: translateX(200%) skewX(-30deg); opacity: 0; }
+}
+
+.animate-shine {
+  animation: shine 3s infinite ease-in-out;
+}
