@@ -1,0 +1,52 @@
+{
+  "entities": {
+    "author": {
+      "title": "Author Profile",
+      "description": "Stores author-related information like the profile photo.",
+      "type": "object",
+      "properties": {
+        "photoUrl": {
+          "type": "string",
+          "description": "Base64 encoded string or URL of the author's photo."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp."
+        }
+      },
+      "required": ["photoUrl"]
+    },
+    "book": {
+      "title": "Book Cover",
+      "description": "Stores a book's cover image URL and theme color.",
+      "type": "object",
+      "properties": {
+        "coverUrl": {
+          "type": "string",
+          "description": "Base64 encoded string or URL of the book's cover."
+        },
+        "spineColor": {
+          "type": "string",
+          "description": "Hex color code for the book's spine and back cover."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp."
+        }
+      },
+      "required": ["coverUrl"]
+    }
+  },
+  "firestore": {
+    "/author/profile": {
+      "schema": "author",
+      "description": "Single document storing the author's profile data."
+    },
+    "/books/{bookId}": {
+      "schema": "book",
+      "description": "Stores cover images for each book."
+    }
+  }
+}
