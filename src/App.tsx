@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, ChangeEvent, Component, ErrorInfo, ReactNode } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Mail, Instagram, BookOpen, Star, Menu, X, Globe, Linkedin, Facebook, Music2, Send, Play, Twitter, ChevronDown, LogIn, LogOut } from "lucide-react";
+import { Mail, Instagram, BookOpen, Star, Menu, X, Globe, Linkedin, Facebook, Music2, Send, Play, Twitter, ChevronDown, LogIn, LogOut, Camera } from "lucide-react";
 import { db, auth } from "./firebase";
 import { doc, onSnapshot, setDoc, serverTimestamp, getDocFromServer, collection } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from "firebase/auth";
@@ -115,8 +115,9 @@ function MainApp() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
-  const [authorPhoto, setAuthorPhoto] = useState<string | null>(null);
-  const [bookData, setBookData] = useState<Record<string, { coverUrl: string; spineColor?: string }>>({});
+  const [authorPhoto, setAuthorPhoto] = useState<string | null>("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400&h=400");
+  const [publisherSeal, setPublisherSeal] = useState<string | null>(null);
+  const [bookData, setBookData] = useState<Record<string, { coverUrl?: string; spineColor?: string; coverUrlEn?: string; spineColorEn?: string }>>({});
 
   // Test connection to Firestore
   useEffect(() => {
@@ -148,7 +149,9 @@ function MainApp() {
     const path = "author/profile";
     const unsubscribe = onSnapshot(doc(db, path), (snapshot) => {
       if (snapshot.exists()) {
-        setAuthorPhoto(snapshot.data().photoUrl);
+        const data = snapshot.data();
+        setAuthorPhoto(data.photoUrl);
+        setPublisherSeal(data.publisherSealUrl);
       }
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, path);
@@ -163,12 +166,14 @@ function MainApp() {
 
     const path = "books";
     const unsubscribe = onSnapshot(collection(db, path), (snapshot) => {
-      const data: Record<string, { coverUrl: string; spineColor?: string }> = {};
+      const data: Record<string, { coverUrl?: string; spineColor?: string; coverUrlEn?: string; spineColorEn?: string }> = {};
       snapshot.forEach((doc) => {
         const docData = doc.data();
         data[doc.id] = {
           coverUrl: docData.coverUrl,
-          spineColor: docData.spineColor
+          spineColor: docData.spineColor,
+          coverUrlEn: docData.coverUrlEn,
+          spineColorEn: docData.spineColorEn
         };
       });
       setBookData(data);
@@ -196,12 +201,41 @@ function MainApp() {
     }
   };
 
+  const compressImage = (base64: string, maxWidth: number = 800, quality: number = 0.7): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = Math.floor((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(base64);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = () => resolve(base64);
+      img.src = base64;
+    });
+  };
+
   const handlePhotoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = async () => {
-        const base64 = reader.result as string;
+        const originalBase64 = reader.result as string;
+        const base64 = await compressImage(originalBase64, 400, 0.8);
         
         // Optimistic update
         setAuthorPhoto(base64);
@@ -211,7 +245,32 @@ function MainApp() {
           await setDoc(doc(db, path), {
             photoUrl: base64,
             updatedAt: serverTimestamp()
-          });
+          }, { merge: true });
+        } catch (error) {
+          handleFirestoreError(error, OperationType.WRITE, path);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePublisherSealUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const originalBase64 = reader.result as string;
+        const base64 = await compressImage(originalBase64, 300, 0.8);
+        
+        // Optimistic update
+        setPublisherSeal(base64);
+
+        const path = "author/profile";
+        try {
+          await setDoc(doc(db, path), {
+            publisherSealUrl: base64,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
         } catch (error) {
           handleFirestoreError(error, OperationType.WRITE, path);
         }
@@ -260,27 +319,32 @@ function MainApp() {
     });
   };
 
-  const handleBookCoverUpload = async (e: ChangeEvent<HTMLInputElement>, bookId: string) => {
+  const handleBookCoverUpload = async (e: ChangeEvent<HTMLInputElement>, bookId: string, isEn: boolean = false) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = async () => {
-        const base64 = reader.result as string;
+        const originalBase64 = reader.result as string;
+        const base64 = await compressImage(originalBase64, 600, 0.7);
         const dominantColor = await extractDominantColor(base64);
         
         // Optimistic update
         setBookData(prev => ({ 
           ...prev, 
-          [bookId]: { coverUrl: base64, spineColor: dominantColor } 
+          [bookId]: { 
+            ...prev[bookId],
+            [isEn ? 'coverUrlEn' : 'coverUrl']: base64, 
+            [isEn ? 'spineColorEn' : 'spineColor']: dominantColor 
+          } 
         }));
 
         const path = `books/${bookId}`;
         try {
           await setDoc(doc(db, "books", bookId), {
-            coverUrl: base64,
-            spineColor: dominantColor,
+            [isEn ? 'coverUrlEn' : 'coverUrl']: base64,
+            [isEn ? 'spineColorEn' : 'spineColor']: dominantColor,
             updatedAt: serverTimestamp()
-          });
+          }, { merge: true });
         } catch (error) {
           handleFirestoreError(error, OperationType.WRITE, path);
         }
@@ -346,6 +410,9 @@ function MainApp() {
       filterAll: "Todos",
       filterNew: "Novedades",
       filterSoon: "Próximamente",
+      privacyPolicy: "Política de Privacidad",
+      sitemap: "Mapa del Sitio",
+      followMe: "Sígueme en redes",
     },
     en: {
       nav: ["Home", "Books", "Author", "Trailers", "Press", "Reviews", "Contact"],
@@ -401,6 +468,9 @@ function MainApp() {
       filterAll: "All",
       filterNew: "New",
       filterSoon: "Coming Soon",
+      privacyPolicy: "Privacy Policy",
+      sitemap: "Sitemap",
+      followMe: "Follow me",
     },
   };
 
@@ -424,7 +494,7 @@ function MainApp() {
       link: "https://www.amazon.com/dp/B0GR1DZ5JC",
       linkEn: "https://www.amazon.com/dp/B0GSCGFBS8?dplnkId=f65997f5-f5e3-42ad-bc43-bc96204486b1&nodl=1",
       image: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=600&h=800",
-      imageEn: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=600&h=800",
+      imageEn: "https://ais-dev-v3wxidfdcu2aht5txbgd4h-258365610213.europe-west2.run.app/decoy_en_cover.png",
       status: "new"
     },
     {
@@ -491,14 +561,14 @@ function MainApp() {
           >
             <div className="group relative h-10 w-10 rounded-full overflow-hidden border border-white/10 bg-neutral-800 cursor-pointer">
               <img 
-                src={authorPhoto || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=100&h=100"} 
+                src={authorPhoto || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400&h=400"} 
                 alt="Miguel Morales" 
-                className="h-full w-full object-cover grayscale"
+                className="h-full w-full object-cover"
                 referrerPolicy="no-referrer"
               />
               {isAdmin && (
                 <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                  <Globe size={12} className="text-white" />
+                  <Camera size={12} className="text-white" />
                   <input type="file" className="hidden" onChange={handlePhotoUpload} accept="image/*" />
                 </label>
               )}
@@ -523,6 +593,12 @@ function MainApp() {
               </nav>
               
               <div className="flex items-center gap-2">
+                {isAdmin && (
+                  <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-black uppercase tracking-widest text-emerald-400">
+                    <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                    Admin
+                  </div>
+                )}
                 {user ? (
                   <button 
                     onClick={handleLogout}
@@ -594,18 +670,18 @@ function MainApp() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1.2, ease: "easeOut" }}
-        className="relative overflow-hidden border-b border-white/10"
+        className="relative overflow-hidden border-b border-white/10 py-12 md:py-20"
       >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.14),transparent_28%),radial-gradient(circle_at_left,rgba(255,255,255,0.08),transparent_22%)]" />
-        <div className="mx-auto grid max-w-7xl gap-10 px-6 py-20 md:grid-cols-2 md:items-center md:py-28">
+        <div className="mx-auto grid max-w-7xl gap-12 md:gap-24 px-6 md:grid-cols-2 md:items-start">
           <motion.div 
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
-            className="relative z-10"
+            className="relative z-20 pt-8 md:pt-10"
           >
-            <h1 className="max-w-5xl text-4xl font-light leading-tight md:text-7xl lg:text-8xl xl:text-9xl tracking-[-0.04em] font-serif">
-              <span className="block text-white/60 tracking-[0.4em] font-bold uppercase text-[10px] md:text-xs mb-8 whitespace-nowrap">{ui.label}</span>
+            <h1 className="max-w-2xl text-5xl font-light leading-tight md:text-6xl lg:text-7xl xl:text-8xl tracking-[-0.04em] font-serif">
+              <span className="block text-white/60 tracking-[0.4em] font-bold uppercase text-[10px] md:text-xs mb-8">{ui.label}</span>
               <motion.span 
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -618,13 +694,13 @@ function MainApp() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 1, delay: 1 }}
-                className="block leading-[0.85] text-neutral-500 mt-2"
+                className="block leading-[0.85] text-neutral-500 mt-1"
               >
                 {ui.heroTitle2}
               </motion.span>
             </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-neutral-400">{ui.heroText}</p>
-            <div className="mt-8 flex flex-wrap gap-4">
+            <p className="mt-4 max-w-xl text-lg leading-relaxed text-neutral-400">{ui.heroText}</p>
+            <div className="mt-6 flex flex-wrap gap-4">
               <div className="flex gap-4">
                 <a href="#libros" className="rounded-2xl border border-white/20 bg-white px-8 py-4 text-sm font-bold text-neutral-950 shadow-lg shadow-white/10 transition hover:scale-[1.02]">
                   {ui.cta1}
@@ -643,14 +719,14 @@ function MainApp() {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 0.8, ease: "easeOut" }}
-            className="relative z-10 flex justify-center md:justify-end"
+            className="relative z-10 flex justify-center md:justify-end pt-16 md:pt-12 pb-12"
           >
             <div className="relative group/hero-book [perspective:3000px] w-full max-w-[280px]">
               <div className="relative aspect-[3/4.2] w-full transition-all duration-1000 [transform-style:preserve-3d] group-hover/hero-book:[transform:rotateY(-15deg)_rotateX(2deg)_rotateZ(-1deg)]">
                 {/* Front Cover */}
                 <div className="absolute inset-0 z-20 rounded-r-[2px] overflow-hidden border-y border-r border-white/10 bg-neutral-900 shadow-2xl [transform:translateZ(20px)]">
                   <img 
-                    src={bookData["el-senuelo"]?.coverUrl || (language === "es" ? "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=600&h=800" : "https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=600&h=800")} 
+                    src={language === "es" ? (bookData["el-senuelo"]?.coverUrl || books[0].image) : (bookData["el-senuelo"]?.coverUrlEn || books[0].imageEn || books[0].image)} 
                     alt={language === "es" ? "El Señuelo" : "The Decoy"} 
                     className="h-full w-full object-cover transition-all duration-700" 
                     referrerPolicy="no-referrer"
@@ -658,6 +734,36 @@ function MainApp() {
                   {/* Spine Crease */}
                   <div className="absolute inset-y-0 left-0 w-[3px] bg-black/30 z-30" />
                   <div className="absolute inset-y-0 left-[3px] w-[1px] bg-white/5 z-30" />
+
+                  {isAdmin && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 opacity-0 group-hover/hero-book:opacity-100 transition-opacity cursor-pointer backdrop-blur-md z-40 gap-6">
+                      <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-es">
+                        <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-es:bg-white group-hover/upload-es:text-black transition-colors">
+                          <Globe size={20} />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-white">Portada ES</span>
+                        <input 
+                          type="file" 
+                          className="hidden" 
+                          onChange={(e) => handleBookCoverUpload(e, "el-senuelo", false)} 
+                          accept="image/*" 
+                        />
+                      </label>
+                      <div className="w-12 h-px bg-white/20" />
+                      <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-en">
+                        <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-en:bg-white group-hover/upload-en:text-black transition-colors">
+                          <Globe size={20} />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-white">Portada EN</span>
+                        <input 
+                          type="file" 
+                          className="hidden" 
+                          onChange={(e) => handleBookCoverUpload(e, "el-senuelo", true)} 
+                          accept="image/*" 
+                        />
+                      </label>
+                    </div>
+                  )}
                   
                   {/* Lighting overlay */}
                   <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-white/5 pointer-events-none" />
@@ -667,7 +773,7 @@ function MainApp() {
                 {/* Spine depth */}
                 <div 
                   className="absolute inset-y-0 left-0 w-[40px] [transform:rotateY(-90deg)_translateZ(20px)] origin-left border-r border-white/10 shadow-inner overflow-hidden" 
-                  style={{ backgroundColor: bookData["el-senuelo"]?.spineColor || '#171717' }}
+                  style={{ backgroundColor: (language === "es" ? bookData["el-senuelo"]?.spineColor : bookData["el-senuelo"]?.spineColorEn) || '#171717' }}
                 >
                   {/* Spine Texture & Lighting */}
                   <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
@@ -693,7 +799,7 @@ function MainApp() {
                 {/* Back Cover */}
                 <div 
                   className="absolute inset-0 rounded-sm [transform:translateZ(-20px)] shadow-2xl border border-white/5" 
-                  style={{ backgroundColor: bookData["el-senuelo"]?.spineColor || '#171717' }}
+                  style={{ backgroundColor: (language === "es" ? bookData["el-senuelo"]?.spineColor : bookData["el-senuelo"]?.spineColorEn) || '#171717' }}
                 >
                   <div className="absolute inset-0 bg-black/20" />
                 </div>
@@ -791,7 +897,7 @@ function MainApp() {
                     {/* Front Cover */}
                     <div className="absolute inset-0 z-20 rounded-r-[2px] overflow-hidden border-y border-r border-white/10 shadow-2xl [transform:translateZ(20px)]">
                       <img
-                        src={bookData[book.id]?.coverUrl || (language === "es" ? book.image : (book.imageEn || book.image))}
+                        src={language === "es" ? (bookData[book.id]?.coverUrl || book.image) : (bookData[book.id]?.coverUrlEn || book.imageEn || book.image)}
                         alt={language === "es" ? book.title : (book.titleEn || book.title)}
                         className="h-full w-full object-cover transition-all duration-700"
                         referrerPolicy="no-referrer"
@@ -801,16 +907,33 @@ function MainApp() {
                       <div className="absolute inset-y-0 left-[2px] w-[1px] bg-white/10 z-30" />
 
                       {isAdmin && (
-                        <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-sm z-40">
-                          <Globe size={24} className="text-white mb-2" />
-                          <span className="text-[8px] font-black uppercase tracking-widest text-white">Portada</span>
-                          <input 
-                            type="file" 
-                            className="hidden" 
-                            onChange={(e) => handleBookCoverUpload(e, book.id)} 
-                            accept="image/*" 
-                          />
-                        </label>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 opacity-0 group-hover/book-card:opacity-100 transition-opacity cursor-pointer backdrop-blur-md z-40 gap-6">
+                          <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-es">
+                            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-es:bg-white group-hover/upload-es:text-black transition-colors">
+                              <Globe size={18} />
+                            </div>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-white">Portada ES</span>
+                            <input 
+                              type="file" 
+                              className="hidden" 
+                              onChange={(e) => handleBookCoverUpload(e, book.id, false)} 
+                              accept="image/*" 
+                            />
+                          </label>
+                          <div className="w-10 h-px bg-white/20" />
+                          <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-en">
+                            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-en:bg-white group-hover/upload-en:text-black transition-colors">
+                              <Globe size={18} />
+                            </div>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-white">Portada EN</span>
+                            <input 
+                              type="file" 
+                              className="hidden" 
+                              onChange={(e) => handleBookCoverUpload(e, book.id, true)} 
+                              accept="image/*" 
+                            />
+                          </label>
+                        </div>
                       )}
                       {/* Lighting effects */}
                       <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 opacity-30 group-hover:opacity-50 transition-opacity duration-700" />
@@ -820,7 +943,7 @@ function MainApp() {
                     {/* Spine */}
                     <div 
                       className="absolute inset-y-0 left-0 w-[40px] [transform:rotateY(-90deg)_translateZ(20px)] origin-left border-r border-white/10 shadow-inner overflow-hidden"
-                      style={{ backgroundColor: bookData[book.id]?.spineColor || '#171717' }}
+                      style={{ backgroundColor: (language === "es" ? bookData[book.id]?.spineColor : bookData[book.id]?.spineColorEn) || '#171717' }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
                       <div className="absolute inset-x-0 top-4 h-px bg-white/5" />
@@ -845,7 +968,7 @@ function MainApp() {
                     {/* Back Cover */}
                     <div 
                       className="absolute inset-0 rounded-sm [transform:translateZ(-20px)] shadow-2xl border border-white/5" 
-                      style={{ backgroundColor: bookData[book.id]?.spineColor || '#171717' }}
+                      style={{ backgroundColor: (language === "es" ? bookData[book.id]?.spineColor : bookData[book.id]?.spineColorEn) || '#171717' }}
                     >
                       <div className="absolute inset-0 bg-black/20" />
                     </div>
@@ -960,15 +1083,15 @@ function MainApp() {
               <div className="absolute -inset-4 border border-white/10 rounded-[3rem] rotate-3" />
               <div className="relative h-full w-full rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-neutral-900">
                 <img 
-                  src={authorPhoto || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=800&h=800"} 
+                  src={authorPhoto || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=800&h=800"} 
                   alt="Miguel Morales Moshiashvili" 
-                  className="h-full w-full object-cover grayscale hover:grayscale-0 transition-all duration-700" 
+                  className="h-full w-full object-cover hover:scale-105 transition-all duration-700" 
                   referrerPolicy="no-referrer"
                 />
                 {isAdmin && (
                   <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-sm">
                     <div className="p-4 rounded-full bg-white/10 border border-white/20 mb-2">
-                      <Globe size={32} className="text-white" />
+                      <Camera size={32} className="text-white" />
                     </div>
                     <span className="text-xs font-bold tracking-widest uppercase text-white">
                       {language === "es" ? "Cambiar foto" : "Change photo"}
@@ -1077,7 +1200,7 @@ function MainApp() {
       </section>
 
       {/* Reviews Section */}
-      <section id="resenas" className="mx-auto max-w-7xl px-6 py-32">
+      <section id="resenas" className="mx-auto max-w-7xl px-6 py-16">
         <motion.div 
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -1115,17 +1238,17 @@ function MainApp() {
       </section>
 
       {/* Contact Section */}
-      <section id="contacto" className="relative py-32 bg-white/[0.01] border-t border-white/5 overflow-hidden">
-        <div className="mx-auto grid max-w-7xl gap-20 px-6 md:grid-cols-2 items-start relative z-10">
+      <section id="contacto" className="relative py-16 bg-white/[0.01] border-t border-white/5 overflow-hidden">
+        <div className="mx-auto grid max-w-7xl gap-10 px-6 md:grid-cols-2 items-start relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <p className="text-xs uppercase tracking-[0.5em] text-neutral-500 font-bold mb-12">{ui.contactEyebrow}</p>
+            <p className="text-xs uppercase tracking-[0.5em] text-neutral-500 font-bold mb-6">{ui.contactEyebrow}</p>
             {ui.contactText && (
-              <p className="text-lg text-neutral-400 leading-relaxed mb-12">
+              <p className="text-lg text-neutral-400 leading-relaxed mb-6">
                 {ui.contactText}
               </p>
             )}
@@ -1218,7 +1341,7 @@ function MainApp() {
       </section>
 
       {/* Newsletter Section */}
-      <section className="py-24 bg-white/[0.02] border-y border-white/5">
+      <section className="py-12 bg-white/[0.02] border-y border-white/5">
         <div className="mx-auto max-w-3xl px-6 text-center">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -1284,17 +1407,83 @@ function MainApp() {
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 1 }}
-        className="border-t border-white/5 py-12"
+        className="border-t border-white/5 py-10 bg-black"
       >
-        <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="text-center md:text-left">
-            <p className="text-xs font-bold tracking-[0.2em] uppercase font-serif">Miguel Morales</p>
-            <p className="text-xs font-bold tracking-[0.2em] uppercase mb-1 font-serif">Moshiashvili</p>
-            <p className="text-[10px] text-neutral-600 uppercase tracking-[0.3em]">{ui.footer}</p>
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            {/* Brand Column */}
+            <div className="text-center md:text-left">
+              <div className="flex flex-col text-xs font-bold tracking-[0.2em] uppercase font-serif mb-4">
+                <span className="leading-none">Miguel Morales</span>
+                <span className="leading-none font-light opacity-70 mt-1">Moshiashvili</span>
+              </div>
+              
+              <p className="text-[10px] text-neutral-500 uppercase tracking-[0.3em] leading-relaxed max-w-[200px] mx-auto md:mx-0">
+                {ui.footer}
+              </p>
+            </div>
+
+            {/* Social Column */}
+            <div className="text-center">
+              <p className="text-[10px] uppercase tracking-[0.4em] text-neutral-600 font-black mb-3">{ui.followMe}</p>
+              <div className="flex justify-center gap-4 mb-6">
+                <a href="https://instagram.com/genomics4u" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-neutral-400 hover:bg-white hover:text-black transition-all duration-300">
+                  <Instagram size={18} />
+                </a>
+                <a href="#" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-neutral-400 hover:bg-white hover:text-black transition-all duration-300">
+                  <Facebook size={18} />
+                </a>
+                <a href="https://linkedin.com/in/miguel-morales-moshiashvili" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-neutral-400 hover:bg-white hover:text-black transition-all duration-300">
+                  <Linkedin size={18} />
+                </a>
+                <a href="#" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-neutral-400 hover:bg-white hover:text-black transition-all duration-300">
+                  <Twitter size={18} />
+                </a>
+                <a href="https://tiktok.com/@genomics4u" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-neutral-400 hover:bg-white hover:text-black transition-all duration-300">
+                  <Music2 size={18} />
+                </a>
+              </div>
+
+              {/* Publisher Seal */}
+              <div className="flex justify-center">
+                <div className="group relative w-16 h-16 rounded-xl border border-white/5 bg-white/5 flex items-center justify-center overflow-hidden">
+                  {publisherSeal ? (
+                    <img src={publisherSeal} alt="Editorial" className="w-full h-full object-contain p-2" referrerPolicy="no-referrer" />
+                  ) : (
+                    <div className="text-[8px] text-neutral-600 uppercase tracking-widest text-center px-1">Sello Editorial</div>
+                  )}
+                  {isAdmin && (
+                    <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                      <Camera size={14} className="text-white" />
+                      <input type="file" className="hidden" onChange={handlePublisherSealUpload} accept="image/*" />
+                    </label>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Links Column */}
+            <div className="text-center md:text-right">
+              <p className="text-[10px] uppercase tracking-[0.4em] text-neutral-600 font-black mb-3">Legal</p>
+              <div className="flex flex-col gap-3">
+                <a href="#" className="text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white transition-colors">
+                  {ui.privacyPolicy}
+                </a>
+                <a href="#" className="text-[10px] uppercase tracking-widest text-neutral-500 hover:text-white transition-colors">
+                  {ui.sitemap}
+                </a>
+              </div>
+            </div>
           </div>
-          <p className="text-[10px] text-neutral-600 uppercase tracking-widest">
-            © {new Date().getFullYear()} — All rights reserved
-          </p>
+
+          <div className="pt-4 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-[10px] text-neutral-700 uppercase tracking-widest">
+              © {new Date().getFullYear()} — All rights reserved
+            </p>
+            <div className="flex gap-6">
+              <a href="#inicio" className="text-[10px] text-neutral-700 uppercase tracking-widest hover:text-white transition-colors">Top</a>
+            </div>
+          </div>
         </div>
       </motion.footer>
 

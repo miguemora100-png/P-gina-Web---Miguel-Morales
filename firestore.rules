@@ -32,16 +32,17 @@ service cloud.firestore {
     }
 
     function isValidAuthor(data) {
-      return data.keys().hasAll(['photoUrl']) &&
-             data.photoUrl is string &&
-             data.photoUrl.size() < 1048576; // Limit to 1MB
+      return (data.keys().hasAny(['photoUrl', 'publisherSealUrl'])) &&
+             (!('photoUrl' in data) || (data.photoUrl is string && data.photoUrl.size() < 1000000)) &&
+             (!('publisherSealUrl' in data) || (data.publisherSealUrl is string && data.publisherSealUrl.size() < 1000000));
     }
 
     function isValidBook(data) {
-      return data.keys().hasAll(['coverUrl']) &&
-             data.coverUrl is string &&
-             data.coverUrl.size() < 1048576 && // Limit to 1MB
-             (!('spineColor' in data) || (data.spineColor is string && data.spineColor.size() < 10));
+      return (data.keys().hasAny(['coverUrl', 'coverUrlEn'])) &&
+             (!('coverUrl' in data) || (data.coverUrl is string && data.coverUrl.size() < 1000000)) && // Limit to ~1MB
+             (!('coverUrlEn' in data) || (data.coverUrlEn is string && data.coverUrlEn.size() < 1000000)) && // Limit to ~1MB
+             (!('spineColor' in data) || (data.spineColor is string && data.spineColor.size() < 10)) &&
+             (!('spineColorEn' in data) || (data.spineColorEn is string && data.spineColorEn.size() < 10));
     }
 
     match /author/profile {

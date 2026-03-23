@@ -9,6 +9,10 @@
           "type": "string",
           "description": "Base64 encoded string or URL of the author's photo."
         },
+        "publisherSealUrl": {
+          "type": "string",
+          "description": "Base64 encoded string or URL of the publisher's seal."
+        },
         "updatedAt": {
           "type": "string",
           "format": "date-time",
