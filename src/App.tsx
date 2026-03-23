@@ -675,10 +675,30 @@ function MainApp() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1.2, ease: "easeOut" }}
-        className="relative overflow-hidden border-b border-white/10 py-12 md:py-20"
+        className="relative overflow-hidden border-b border-white/10 py-12 md:py-32"
       >
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.14),transparent_28%),radial-gradient(circle_at_left,rgba(255,255,255,0.08),transparent_22%)]" />
-        <div className="mx-auto grid max-w-7xl gap-12 md:gap-24 px-6 md:grid-cols-2 md:items-start">
+        {/* Landscape Background - Mikel Santiago Style */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1920" 
+            alt="Landscape Background"
+            className="h-full w-full object-cover opacity-30 grayscale brightness-50"
+            referrerPolicy="no-referrer"
+          />
+          {/* Fog/Atmosphere overlays */}
+          <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/60 to-transparent" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(10,10,10,0.9)_100%)]" />
+          <motion.div 
+            animate={{ 
+              x: [-20, 20, -20],
+              opacity: [0.1, 0.2, 0.1]
+            }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/fog.png')] opacity-10 pointer-events-none"
+          />
+        </div>
+
+        <div className="mx-auto grid max-w-7xl gap-12 md:gap-24 px-6 md:grid-cols-2 md:items-start relative z-10">
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
