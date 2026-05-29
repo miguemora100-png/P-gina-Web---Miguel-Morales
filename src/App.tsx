@@ -372,9 +372,9 @@ function MainApp() {
       cta1: "Descubrir libros",
       cta2: "Sobre el autor",
       cta3: "Contacto",
-      featured: "Título destacado",
+      featured: "Novedad",
       featuredText:
-        "Una novela diseñada para atrapar desde la primera impresión: misterio, atmósfera y una identidad visual de autor contemporáneo.",
+        "Una novela de identidad, obsesión y memoria, construida con una atmósfera envolvente y una tensión que no da tregua.",
       booksEyebrow: "Libros",
       booksTitle: "",
       booksText: "",
@@ -430,9 +430,9 @@ function MainApp() {
       cta1: "Discover books",
       cta2: "About the author",
       cta3: "Contact",
-      featured: "Featured title",
+      featured: "New Release",
       featuredText:
-        "A novel crafted to captivate from the very first impression: mystery, atmosphere and a contemporary author identity.",
+        "A novel of identity, obsession and memory, built with an immersive atmosphere and relentless tension.",
       booksEyebrow: "Books",
       booksTitle: "",
       booksText: "",
@@ -498,8 +498,8 @@ function MainApp() {
       noteEn: "Available in Kindle and paperback",
       link: "https://www.amazon.com/dp/B0GR1DZ5JC",
       linkEn: "https://www.amazon.com/dp/B0GSCGFBS8?dplnkId=f65997f5-f5e3-42ad-bc43-bc96204486b1&nodl=1",
-      image: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=600&h=800",
-      imageEn: "https://ais-dev-v3wxidfdcu2aht5txbgd4h-258365610213.europe-west2.run.app/decoy_en_cover.png",
+      image: "/el_senuelo_mockup.png",
+      imageEn: "/el_senuelo_mockup.png",
       status: "new"
     },
     {
@@ -514,13 +514,15 @@ function MainApp() {
         "A novel of identity, obsession and memory, built with immersive atmosphere and relentless tension.",
       synopsis: "Un escritor famoso, en la cima de su carrera, interrumpe de pronto su actividad creativa. Durante cinco años no sale de su pluma ni un solo libro nuevo. A pesar de su éxito mundial, nadie ha visto jamás el rostro del popular autor. Sus intereses siempre y en todas partes han sido representados por un agente literario no menos enigmático. Hubo un tiempo en que en los círculos bohemios circulaban rumores de que se trataba de la misma persona. A una colaboradora externa de una gran editorial, devota admiradora del misterioso escritor, se le presenta la oportunidad de averiguar cuán ciertos son esos rumores. Pero para entrar en la casa del autor como asistente personal, la joven, al igual que los demás aspirantes, deberá superar una pequeña prueba: escribir un relato que comience con las palabras: «Deténme, o todo se repetirá».",
       synopsisEn: "A famous writer, at the peak of his career, suddenly interrupts his creative activity. For five years, not a single new book has come from his pen. Despite his worldwide success, no one has ever seen the popular author's face. His interests have always and everywhere been represented by a no less enigmatic literary agent. There was a time when rumors circulated in bohemian circles that they were the same person. An external collaborator of a major publishing house, a devoted admirer of the mysterious writer, is presented with the opportunity to find out how true those rumors are. But to enter the author's house as a personal assistant, the young woman, like the other applicants, must pass a small test: write a story that begins with the words: 'Stop me, or everything will repeat itself'.",
-      cta: "Próximamente",
-      ctaEn: "Coming soon",
-      note: "Disponible próximamente",
-      noteEn: "Coming soon",
-      link: "#",
-      image: "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=600&h=800",
-      status: "soon"
+      cta: "Comprar en Amazon",
+      ctaEn: "Buy on Amazon",
+      note: "Disponible en Kindle y tapa blanda",
+      noteEn: "Available in Kindle and paperback",
+      link: "https://www.amazon.com/dp/B0H38TPVHL",
+      linkEn: "https://www.amazon.com/dp/B0H38TPVHL",
+      image: "/el_efecto_strauss_mockup.png",
+      imageEn: "/el_efecto_strauss_mockup.png",
+      status: "new"
     },
   ];
 
@@ -746,105 +748,176 @@ function MainApp() {
             transition={{ duration: 1.2, delay: 0.8, ease: "easeOut" }}
             className="relative z-10 flex justify-center md:justify-end pt-16 md:pt-12 pb-12"
           >
-            <div className="relative group/hero-book [perspective:3000px] w-full max-w-[280px]">
-              <div className="relative aspect-[3/4.2] w-full transition-all duration-1000 [transform-style:preserve-3d] group-hover/hero-book:[transform:rotateY(-15deg)_rotateX(2deg)_rotateZ(-1deg)]">
-                {/* Front Cover */}
-                <div className="absolute inset-0 z-20 rounded-r-[2px] overflow-hidden border-y border-r border-white/10 bg-neutral-900 shadow-2xl [transform:translateZ(20px)]">
-                  <img 
-                    src={language === "es" ? (bookData["el-senuelo"]?.coverUrl || books[0].image) : (bookData["el-senuelo"]?.coverUrlEn || books[0].imageEn || books[0].image)} 
-                    alt={language === "es" ? "El Señuelo" : "The Decoy"} 
-                    className="h-full w-full object-cover transition-all duration-700" 
-                    referrerPolicy="no-referrer"
-                  />
-                  {/* Spine Crease */}
-                  <div className="absolute inset-y-0 left-0 w-[3px] bg-black/30 z-30" />
-                  <div className="absolute inset-y-0 left-[3px] w-[1px] bg-white/5 z-30" />
+            {(() => {
+              const heroCoverUrl = language === "es" ? (bookData["el-efecto-strauss"]?.coverUrl || books[1].image) : (bookData["el-efecto-strauss"]?.coverUrlEn || books[1].imageEn || books[1].image);
+              const isMockup = heroCoverUrl.includes("mockup");
+              
+              if (isMockup) {
+                return (
+                  <div className="relative group/hero-book w-full max-w-[280px]">
+                    <motion.div 
+                      whileHover={{ y: -10, rotateY: -6, rotateX: 2, scale: 1.03 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                      className="relative z-20 drop-shadow-[0_25px_25px_rgba(0,0,0,0.65)] cursor-pointer"
+                    >
+                      <img 
+                        src={heroCoverUrl} 
+                        alt={language === "es" ? "El Efecto Strauss" : "The Strauss Effect"} 
+                        className="w-full h-auto object-contain rounded-lg shadow-2xl" 
+                        referrerPolicy="no-referrer"
+                      />
+                      
+                      {isAdmin && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 opacity-0 group-hover/hero-book:opacity-100 transition-opacity cursor-pointer backdrop-blur-md z-40 gap-6 rounded-lg">
+                          <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-es">
+                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-es:bg-white group-hover/upload-es:text-black transition-colors">
+                              <Globe size={20} />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white">Portada ES</span>
+                            <input 
+                              type="file" 
+                              className="hidden" 
+                              onChange={(e) => handleBookCoverUpload(e, "el-efecto-strauss", false)} 
+                              accept="image/*" 
+                            />
+                          </label>
+                          <div className="w-12 h-px bg-white/20" />
+                          <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-en">
+                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-en:bg-white group-hover/upload-en:text-black transition-colors">
+                              <Globe size={20} />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white">Portada EN</span>
+                            <input 
+                              type="file" 
+                              className="hidden" 
+                              onChange={(e) => handleBookCoverUpload(e, "el-efecto-strauss", true)} 
+                              accept="image/*" 
+                            />
+                          </label>
+                        </div>
+                      )}
+                    </motion.div>
 
-                  {isAdmin && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 opacity-0 group-hover/hero-book:opacity-100 transition-opacity cursor-pointer backdrop-blur-md z-40 gap-6">
-                      <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-es">
-                        <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-es:bg-white group-hover/upload-es:text-black transition-colors">
-                          <Globe size={20} />
-                        </div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-white">Portada ES</span>
-                        <input 
-                          type="file" 
-                          className="hidden" 
-                          onChange={(e) => handleBookCoverUpload(e, "el-senuelo", false)} 
-                          accept="image/*" 
-                        />
-                      </label>
-                      <div className="w-12 h-px bg-white/20" />
-                      <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-en">
-                        <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-en:bg-white group-hover/upload-en:text-black transition-colors">
-                          <Globe size={20} />
-                        </div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-white">Portada EN</span>
-                        <input 
-                          type="file" 
-                          className="hidden" 
-                          onChange={(e) => handleBookCoverUpload(e, "el-senuelo", true)} 
-                          accept="image/*" 
-                        />
-                      </label>
+                    {/* Shelf Shadow */}
+                    <div className="absolute -bottom-8 left-8 right-8 h-8 bg-black/75 blur-3xl rounded-full opacity-60 group-hover/hero-book:opacity-100 transition-opacity duration-1000" />
+                    
+                    <div className="mt-16 p-6 rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-xl relative z-30">
+                      <div className="text-[10px] uppercase tracking-[0.4em] text-neutral-600 font-black">{ui.featured}</div>
+                      <div className="mt-4 text-3xl font-semibold leading-none tracking-tight font-serif">
+                        {language === "es" ? "El Efecto Strauss" : "The Strauss Effect"}
+                      </div>
+                      <div className="mt-2 text-[10px] uppercase tracking-[0.3em] text-neutral-500 font-bold">
+                        {language === "es" ? books[1].subtitle : books[1].subtitleEn}
+                      </div>
+                      <div className="mt-6 h-px w-full bg-white/10" />
+                      <p className="mt-5 text-sm leading-relaxed text-neutral-400 italic">{ui.featuredText}</p>
                     </div>
-                  )}
+                  </div>
+                );
+              }
+
+              return (
+                <div className="relative group/hero-book [perspective:3000px] w-full max-w-[280px]">
+                  <div className="relative aspect-[3/4.2] w-full transition-all duration-1000 [transform-style:preserve-3d] group-hover/hero-book:[transform:rotateY(-15deg)_rotateX(2deg)_rotateZ(-1deg)]">
+                    {/* Front Cover */}
+                    <div className="absolute inset-0 z-20 rounded-r-[2px] overflow-hidden border-y border-r border-white/10 bg-neutral-900 shadow-2xl [transform:translateZ(20px)]">
+                      <img 
+                        src={heroCoverUrl} 
+                        alt={language === "es" ? "El Efecto Strauss" : "The Strauss Effect"} 
+                        className="h-full w-full object-cover transition-all duration-700" 
+                        referrerPolicy="no-referrer"
+                      />
+                      {/* Spine Crease */}
+                      <div className="absolute inset-y-0 left-0 w-[3px] bg-black/30 z-30" />
+                      <div className="absolute inset-y-0 left-[3px] w-[1px] bg-white/5 z-30" />
+
+                      {isAdmin && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 opacity-0 group-hover/hero-book:opacity-100 transition-opacity cursor-pointer backdrop-blur-md z-40 gap-6">
+                          <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-es">
+                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-es:bg-white group-hover/upload-es:text-black transition-colors">
+                              <Globe size={20} />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white">Portada ES</span>
+                            <input 
+                              type="file" 
+                              className="hidden" 
+                              onChange={(e) => handleBookCoverUpload(e, "el-efecto-strauss", false)} 
+                              accept="image/*" 
+                            />
+                          </label>
+                          <div className="w-12 h-px bg-white/20" />
+                          <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-en">
+                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-en:bg-white group-hover/upload-en:text-black transition-colors">
+                              <Globe size={20} />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white">Portada EN</span>
+                            <input 
+                              type="file" 
+                              className="hidden" 
+                              onChange={(e) => handleBookCoverUpload(e, "el-efecto-strauss", true)} 
+                              accept="image/*" 
+                            />
+                          </label>
+                        </div>
+                      )}
+                      
+                      {/* Lighting overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-white/5 pointer-events-none" />
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.1),transparent_70%)] pointer-events-none" />
+                    </div>
+                    
+                    {/* Spine depth */}
+                    <div 
+                      className="absolute inset-y-0 left-0 w-[40px] [transform:rotateY(-90deg)_translateZ(20px)] origin-left border-r border-white/10 shadow-inner overflow-hidden" 
+                      style={{ backgroundColor: (language === "es" ? bookData["el-efecto-strauss"]?.spineColor : bookData["el-efecto-strauss"]?.spineColorEn) || '#171717' }}
+                    >
+                      {/* Spine Texture & Lighting */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
+                      <div className="absolute inset-x-0 top-4 h-px bg-white/5" />
+                      <div className="absolute inset-x-0 bottom-4 h-px bg-white/5" />
+                      <div className="absolute inset-0 flex items-center justify-center [writing-mode:vertical-rl] rotate-180 py-8">
+                        <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.4em] whitespace-nowrap">
+                          {language === "es" ? "El Efecto Strauss" : "The Strauss Effect"}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Pages depth (Right) */}
+                    <div className="absolute inset-y-[2px] right-0 w-[36px] bg-[#f4f1ea] [transform:rotateY(90deg)_translateZ(2px)] origin-right border-l border-black/5">
+                      <div className="w-full h-full opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(transparent, transparent 1px, #000 2px)' }} />
+                    </div>
+
+                    {/* Top Pages */}
+                    <div className="absolute inset-x-[2px] top-0 h-[36px] bg-[#f4f1ea] [transform:rotateX(90deg)_translateZ(2px)] origin-top border-b border-black/5">
+                      <div className="w-full h-full opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 1px, #000 2px)' }} />
+                    </div>
+
+                    {/* Back Cover */}
+                    <div 
+                      className="absolute inset-0 rounded-sm [transform:translateZ(-20px)] shadow-2xl border border-white/5" 
+                      style={{ backgroundColor: (language === "es" ? bookData["el-efecto-strauss"]?.spineColor : bookData["el-efecto-strauss"]?.spineColorEn) || '#171717' }}
+                    >
+                      <div className="absolute inset-0 bg-black/20" />
+                    </div>
+                  </div>
+
+                  {/* Shelf Shadow */}
+                  <div className="absolute -bottom-12 left-8 right-8 h-8 bg-black/80 blur-3xl rounded-full opacity-0 group-hover/hero-book:opacity-100 transition-opacity duration-1000" />
                   
-                  {/* Lighting overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-white/5 pointer-events-none" />
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.1),transparent_70%)] pointer-events-none" />
-                </div>
-                
-                {/* Spine depth */}
-                <div 
-                  className="absolute inset-y-0 left-0 w-[40px] [transform:rotateY(-90deg)_translateZ(20px)] origin-left border-r border-white/10 shadow-inner overflow-hidden" 
-                  style={{ backgroundColor: (language === "es" ? bookData["el-senuelo"]?.spineColor : bookData["el-senuelo"]?.spineColorEn) || '#171717' }}
-                >
-                  {/* Spine Texture & Lighting */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
-                  <div className="absolute inset-x-0 top-4 h-px bg-white/5" />
-                  <div className="absolute inset-x-0 bottom-4 h-px bg-white/5" />
-                  <div className="absolute inset-0 flex items-center justify-center [writing-mode:vertical-rl] rotate-180 py-8">
-                    <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.4em] whitespace-nowrap">
-                      {language === "es" ? "El Señuelo" : "The Decoy"}
-                    </span>
+                  <div className="mt-16 p-6 rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-xl relative z-30">
+                    <div className="text-[10px] uppercase tracking-[0.4em] text-neutral-600 font-black">{ui.featured}</div>
+                    <div className="mt-4 text-3xl font-semibold leading-none tracking-tight font-serif">
+                      {language === "es" ? "El Efecto Strauss" : "The Strauss Effect"}
+                    </div>
+                    <div className="mt-2 text-[10px] uppercase tracking-[0.3em] text-neutral-500 font-bold">
+                      {language === "es" ? books[1].subtitle : books[1].subtitleEn}
+                    </div>
+                    <div className="mt-6 h-px w-full bg-white/10" />
+                    <p className="mt-5 text-sm leading-relaxed text-neutral-400 italic">{ui.featuredText}</p>
                   </div>
                 </div>
-                
-                {/* Pages depth (Right) */}
-                <div className="absolute inset-y-[2px] right-0 w-[36px] bg-[#f4f1ea] [transform:rotateY(90deg)_translateZ(2px)] origin-right border-l border-black/5">
-                  <div className="w-full h-full opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(transparent, transparent 1px, #000 2px)' }} />
-                </div>
-
-                {/* Top Pages */}
-                <div className="absolute inset-x-[2px] top-0 h-[36px] bg-[#f4f1ea] [transform:rotateX(90deg)_translateZ(2px)] origin-top border-b border-black/5">
-                  <div className="w-full h-full opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 1px, #000 2px)' }} />
-                </div>
-
-                {/* Back Cover */}
-                <div 
-                  className="absolute inset-0 rounded-sm [transform:translateZ(-20px)] shadow-2xl border border-white/5" 
-                  style={{ backgroundColor: (language === "es" ? bookData["el-senuelo"]?.spineColor : bookData["el-senuelo"]?.spineColorEn) || '#171717' }}
-                >
-                  <div className="absolute inset-0 bg-black/20" />
-                </div>
-              </div>
-
-              {/* Shelf Shadow */}
-              <div className="absolute -bottom-12 left-8 right-8 h-8 bg-black/80 blur-3xl rounded-full opacity-0 group-hover/hero-book:opacity-100 transition-opacity duration-1000" />
-              
-              <div className="mt-16 p-6 rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-xl relative z-30">
-                <div className="text-[10px] uppercase tracking-[0.4em] text-neutral-600 font-black">{ui.featured}</div>
-                <div className="mt-4 text-3xl font-semibold leading-none tracking-tight font-serif">
-                  {language === "es" ? "El Señuelo" : "The Decoy"}
-                </div>
-                <div className="mt-2 text-[10px] uppercase tracking-[0.3em] text-neutral-500 font-bold">
-                  {language === "es" ? "Thriller psicológico" : "Psychological thriller"}
-                </div>
-                <div className="mt-6 h-px w-full bg-white/10" />
-                <p className="mt-5 text-sm leading-relaxed text-neutral-400 italic">{ui.featuredText}</p>
-              </div>
-            </div>
+              );
+            })()}
           </motion.div>
         </div>
       </motion.section>
@@ -916,100 +989,156 @@ function MainApp() {
               transition={{ delay: idx * 0.1 }}
               className="group rounded-[2.5rem] border border-white/5 bg-white/[0.02] p-8 shadow-xl shadow-black/20 transition hover:bg-white/[0.04] hover:border-white/10"
             >
-              <div className="grid gap-12 md:grid-cols-[200px_1fr] md:items-start">
-                <div className={`relative group/book-card [perspective:3000px] w-full max-w-[220px] mx-auto md:mx-0 py-8 ${book.id === 'el-efecto-strauss' ? 'after:absolute after:inset-0 after:bg-white/5 after:blur-3xl after:rounded-full after:opacity-20 after:pointer-events-none' : ''}`}>
-                  <div className={`relative aspect-[2/3.2] w-full transition-all duration-1000 [transform-style:preserve-3d] [transform:rotateY(-8deg)_rotateX(1deg)] group-hover/book-card:[transform:rotateY(-18deg)_rotateX(3deg)_translateZ(30px)] ${book.id === 'el-efecto-strauss' ? 'ring-1 ring-white/20' : ''}`}>
-                    {/* Front Cover */}
-                    <div className="absolute inset-0 z-20 rounded-r-[2px] overflow-hidden border-y border-r border-white/10 shadow-2xl [transform:translateZ(20px)]">
-                      <img
-                        src={language === "es" ? (bookData[book.id]?.coverUrl || book.image) : (bookData[book.id]?.coverUrlEn || book.imageEn || book.image)}
-                        alt={language === "es" ? book.title : (book.titleEn || book.title)}
-                        className="h-full w-full object-cover transition-all duration-700"
-                        referrerPolicy="no-referrer"
-                      />
-                      {/* Spine Crease */}
-                      <div className="absolute inset-y-0 left-0 w-[2px] bg-black/40 z-30" />
-                      <div className="absolute inset-y-0 left-[2px] w-[1px] bg-white/10 z-30" />
+              {(() => {
+                const coverUrlVal = language === "es" ? (bookData[book.id]?.coverUrl || book.image) : (bookData[book.id]?.coverUrlEn || book.imageEn || book.image);
+                const isMockup = coverUrlVal.includes("mockup");
+                
+                return (
+                  <div className="grid gap-12 md:grid-cols-[200px_1fr] md:items-start">
+                    {/* Cover Area */}
+                    {isMockup ? (
+                      <div className="relative group/book-card w-full max-w-[200px] mx-auto md:mx-0">
+                        <motion.div
+                          whileHover={{ y: -8, rotateY: -5, rotateX: 2, scale: 1.02 }}
+                          transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                          className="relative z-20 drop-shadow-[0_15px_15px_rgba(0,0,0,0.55)] cursor-pointer"
+                        >
+                          <img
+                            src={coverUrlVal}
+                            alt={language === "es" ? book.title : (book.titleEn || book.title)}
+                            className="w-full h-auto object-contain rounded-lg shadow-2xl"
+                            referrerPolicy="no-referrer"
+                          />
 
-                      {isAdmin && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 opacity-0 group-hover/book-card:opacity-100 transition-opacity cursor-pointer backdrop-blur-md z-40 gap-6">
-                          <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-es">
-                            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-es:bg-white group-hover/upload-es:text-black transition-colors">
-                              <Globe size={18} />
+                          {isAdmin && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 opacity-0 group-hover/book-card:opacity-100 transition-opacity cursor-pointer backdrop-blur-md z-40 gap-6 rounded-lg">
+                              <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-es">
+                                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-es:bg-white group-hover/upload-es:text-black transition-colors">
+                                  <Globe size={18} />
+                                </div>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-white">Portada ES</span>
+                                <input 
+                                  type="file" 
+                                  className="hidden" 
+                                  onChange={(e) => handleBookCoverUpload(e, book.id, false)} 
+                                  accept="image/*" 
+                                />
+                              </label>
+                              <div className="w-10 h-px bg-white/20" />
+                              <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-en">
+                                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-en:bg-white group-hover/upload-en:text-black transition-colors">
+                                  <Globe size={18} />
+                                </div>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-white">Portada EN</span>
+                                <input 
+                                  type="file" 
+                                  className="hidden" 
+                                  onChange={(e) => handleBookCoverUpload(e, book.id, true)} 
+                                  accept="image/*" 
+                                />
+                              </label>
                             </div>
-                            <span className="text-[9px] font-black uppercase tracking-widest text-white">Portada ES</span>
-                            <input 
-                              type="file" 
-                              className="hidden" 
-                              onChange={(e) => handleBookCoverUpload(e, book.id, false)} 
-                              accept="image/*" 
-                            />
-                          </label>
-                          <div className="w-10 h-px bg-white/20" />
-                          <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-en">
-                            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-en:bg-white group-hover/upload-en:text-black transition-colors">
-                              <Globe size={18} />
-                            </div>
-                            <span className="text-[9px] font-black uppercase tracking-widest text-white">Portada EN</span>
-                            <input 
-                              type="file" 
-                              className="hidden" 
-                              onChange={(e) => handleBookCoverUpload(e, book.id, true)} 
-                              accept="image/*" 
-                            />
-                          </label>
-                        </div>
-                      )}
-                      {/* Lighting effects */}
-                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 opacity-30 group-hover:opacity-50 transition-opacity duration-700" />
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.05),transparent_70%)]" />
-                      
-                      {/* Special Shine for El Efecto Strauss */}
-                      {book.id === "el-efecto-strauss" && (
-                        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-[30deg] animate-shine" />
-                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_50%)] animate-pulse" />
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Spine */}
-                    <div 
-                      className="absolute inset-y-0 left-0 w-[40px] [transform:rotateY(-90deg)_translateZ(20px)] origin-left border-r border-white/10 shadow-inner overflow-hidden"
-                      style={{ backgroundColor: (language === "es" ? bookData[book.id]?.spineColor : bookData[book.id]?.spineColorEn) || '#171717' }}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
-                      <div className="absolute inset-x-0 top-4 h-px bg-white/5" />
-                      <div className="absolute inset-x-0 bottom-4 h-px bg-white/5" />
-                      <div className="absolute inset-0 flex items-center justify-center [writing-mode:vertical-rl] rotate-180 py-4">
-                        <span className="text-[8px] font-black text-white/40 uppercase tracking-[0.4em] whitespace-nowrap">
-                          {language === "es" ? book.title : book.titleEn}
-                        </span>
+                          )}
+                        </motion.div>
+
+                        {/* Shelf Shadow */}
+                        <div className="absolute -bottom-4 left-0 right-0 h-12 bg-black/90 blur-3xl rounded-full opacity-30 group-hover/book-card:opacity-60 transition-opacity duration-1000 scale-x-110" />
                       </div>
-                    </div>
-                    
-                    {/* Pages (Right side) */}
-                    <div className="absolute inset-y-[2px] right-0 w-[36px] bg-[#f4f1ea] [transform:rotateY(90deg)_translateZ(2px)] origin-right border-l border-black/5">
-                      <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(transparent, transparent 1px, #000 2px)' }} />
-                    </div>
+                    ) : (
+                      <div className={`relative group/book-card [perspective:3000px] w-full max-w-[220px] mx-auto md:mx-0 py-8 ${book.id === 'el-efecto-strauss' ? 'after:absolute after:inset-0 after:bg-white/5 after:blur-3xl after:rounded-full after:opacity-20 after:pointer-events-none' : ''}`}>
+                        <div className={`relative aspect-[2/3.2] w-full transition-all duration-1000 [transform-style:preserve-3d] [transform:rotateY(-8deg)_rotateX(1deg)] group-hover/book-card:[transform:rotateY(-18deg)_rotateX(3deg)_translateZ(30px)] ${book.id === 'el-efecto-strauss' ? 'ring-1 ring-white/20' : ''}`}>
+                          {/* Front Cover */}
+                          <div className="absolute inset-0 z-20 rounded-r-[2px] overflow-hidden border-y border-r border-white/10 shadow-2xl [transform:translateZ(20px)]">
+                            <img
+                              src={coverUrlVal}
+                              alt={language === "es" ? book.title : (book.titleEn || book.title)}
+                              className="h-full w-full object-cover transition-all duration-700"
+                              referrerPolicy="no-referrer"
+                            />
+                            {/* Spine Crease */}
+                            <div className="absolute inset-y-0 left-0 w-[2px] bg-black/40 z-30" />
+                            <div className="absolute inset-y-0 left-[2px] w-[1px] bg-white/10 z-30" />
 
-                    {/* Top Pages */}
-                    <div className="absolute inset-x-[2px] top-0 h-[36px] bg-[#f4f1ea] [transform:rotateX(90deg)_translateZ(2px)] origin-top border-b border-black/5">
-                      <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 1px, #000 2px)' }} />
-                    </div>
+                            {isAdmin && (
+                              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 opacity-0 group-hover/book-card:opacity-100 transition-opacity cursor-pointer backdrop-blur-md z-40 gap-6">
+                                <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-es">
+                                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-es:bg-white group-hover/upload-es:text-black transition-colors">
+                                    <Globe size={18} />
+                                  </div>
+                                  <span className="text-[9px] font-black uppercase tracking-widest text-white">Portada ES</span>
+                                  <input 
+                                    type="file" 
+                                    className="hidden" 
+                                    onChange={(e) => handleBookCoverUpload(e, book.id, false)} 
+                                    accept="image/*" 
+                                  />
+                                </label>
+                                <div className="w-10 h-px bg-white/20" />
+                                <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-en">
+                                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-en:bg-white group-hover/upload-en:text-black transition-colors">
+                                    <Globe size={18} />
+                                  </div>
+                                  <span className="text-[9px] font-black uppercase tracking-widest text-white">Portada EN</span>
+                                  <input 
+                                    type="file" 
+                                    className="hidden" 
+                                    onChange={(e) => handleBookCoverUpload(e, book.id, true)} 
+                                    accept="image/*" 
+                                  />
+                                </label>
+                              </div>
+                            )}
+                            {/* Lighting effects */}
+                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 opacity-30 group-hover:opacity-50 transition-opacity duration-700" />
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.05),transparent_70%)]" />
+                            
+                            {/* Special Shine for El Efecto Strauss */}
+                            {book.id === "el-efecto-strauss" && (
+                              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-[30deg] animate-shine" />
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_50%)] animate-pulse" />
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Spine */}
+                          <div 
+                            className="absolute inset-y-0 left-0 w-[40px] [transform:rotateY(-90deg)_translateZ(20px)] origin-left border-r border-white/10 shadow-inner overflow-hidden"
+                            style={{ backgroundColor: (language === "es" ? bookData[book.id]?.spineColor : bookData[book.id]?.spineColorEn) || '#171717' }}
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
+                            <div className="absolute inset-x-0 top-4 h-px bg-white/5" />
+                            <div className="absolute inset-x-0 bottom-4 h-px bg-white/5" />
+                            <div className="absolute inset-0 flex items-center justify-center [writing-mode:vertical-rl] rotate-180 py-4">
+                              <span className="text-[8px] font-black text-white/40 uppercase tracking-[0.4em] whitespace-nowrap">
+                                {language === "es" ? book.title : book.titleEn}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Pages (Right side) */}
+                          <div className="absolute inset-y-[2px] right-0 w-[36px] bg-[#f4f1ea] [transform:rotateY(90deg)_translateZ(2px)] origin-right border-l border-black/5">
+                            <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(transparent, transparent 1px, #000 2px)' }} />
+                          </div>
 
-                    {/* Back Cover */}
-                    <div 
-                      className="absolute inset-0 rounded-sm [transform:translateZ(-20px)] shadow-2xl border border-white/5" 
-                      style={{ backgroundColor: (language === "es" ? bookData[book.id]?.spineColor : bookData[book.id]?.spineColorEn) || '#171717' }}
-                    >
-                      <div className="absolute inset-0 bg-black/20" />
-                    </div>
-                  </div>
-                  
-                  {/* Shelf Shadow */}
-                  <div className="absolute -bottom-4 left-0 right-0 h-12 bg-black/90 blur-3xl rounded-full opacity-40 group-hover/book-card:opacity-70 transition-opacity duration-1000 scale-x-110" />
-                </div>
+                          {/* Top Pages */}
+                          <div className="absolute inset-x-[2px] top-0 h-[36px] bg-[#f4f1ea] [transform:rotateX(90deg)_translateZ(2px)] origin-top border-b border-black/5">
+                            <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 1px, #000 2px)' }} />
+                          </div>
+
+                          {/* Back Cover */}
+                          <div 
+                            className="absolute inset-0 rounded-sm [transform:translateZ(-20px)] shadow-2xl border border-white/5" 
+                            style={{ backgroundColor: (language === "es" ? bookData[book.id]?.spineColor : bookData[book.id]?.spineColorEn) || '#171717' }}
+                          >
+                            <div className="absolute inset-0 bg-black/20" />
+                          </div>
+                        </div>
+                        
+                        {/* Shelf Shadow */}
+                        <div className="absolute -bottom-4 left-0 right-0 h-12 bg-black/90 blur-3xl rounded-full opacity-40 group-hover/book-card:opacity-70 transition-opacity duration-1000 scale-x-110" />
+                      </div>
+                    )}
                 <div>
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className={`text-3xl font-bold tracking-tight font-serif ${book.id === 'el-efecto-strauss' ? 'bg-gradient-to-r from-white via-white/80 to-white bg-clip-text text-transparent' : ''}`}>
@@ -1100,8 +1229,10 @@ function MainApp() {
                   </p>
                 </div>
               </div>
-            </motion.article>
-          ))}
+            );
+          })()}
+        </motion.article>
+      ))}
         </div>
       </section>
 
@@ -1309,16 +1440,16 @@ function MainApp() {
                   <a href="mailto:miguemora100@gmail.com" className="text-xs font-medium truncate max-w-[150px] hover:text-white transition-colors">miguemora100@gmail.com</a>
                 </div>
               </div>
-              <div className="flex items-center gap-4 text-neutral-300 group cursor-pointer">
+              <a href="https://instagram.com/miguel_m.moshiashvili" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-neutral-300 group cursor-pointer">
                 <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all">
                   <Instagram size={20} />
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-neutral-600 font-black">Instagram</p>
-                  <p className="text-xs font-medium">@genomics4u</p>
+                  <p className="text-xs font-medium">@miguel_m.moshiashvili</p>
                 </div>
-              </div>
-              <div className="flex items-center gap-4 text-neutral-300 group cursor-pointer">
+              </a>
+              <a href="https://linkedin.com/in/miguel-morales-moshiashvili" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-neutral-300 group cursor-pointer">
                 <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all">
                   <Linkedin size={20} />
                 </div>
@@ -1326,8 +1457,8 @@ function MainApp() {
                   <p className="text-[10px] uppercase tracking-widest text-neutral-600 font-black">LinkedIn</p>
                   <p className="text-xs font-medium">miguel-morales-moshiashvili</p>
                 </div>
-              </div>
-              <div className="flex items-center gap-4 text-neutral-300 group cursor-pointer">
+              </a>
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-neutral-300 group cursor-pointer">
                 <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all">
                   <Facebook size={20} />
                 </div>
@@ -1335,16 +1466,16 @@ function MainApp() {
                   <p className="text-[10px] uppercase tracking-widest text-neutral-600 font-black">Facebook</p>
                   <p className="text-xs font-medium">Perfil oficial</p>
                 </div>
-              </div>
-              <div className="flex items-center gap-4 text-neutral-300 group cursor-pointer">
+              </a>
+              <a href="https://tiktok.com/@miguel_m.moshiashvili" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-neutral-300 group cursor-pointer">
                 <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all">
                   <Music2 size={20} />
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-neutral-600 font-black">TikTok</p>
-                  <p className="text-xs font-medium">@genomics4u</p>
+                  <p className="text-xs font-medium">@miguel_m.moshiashvili</p>
                 </div>
-              </div>
+              </a>
             </div>
           </motion.div>
 
@@ -1562,7 +1693,7 @@ function MainApp() {
             <div className="text-center">
               <p className="text-[10px] uppercase tracking-[0.4em] text-neutral-600 font-black mb-3">{ui.followMe}</p>
               <div className="flex justify-center gap-4 mb-6">
-                <a href="https://instagram.com/genomics4u" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-neutral-400 hover:bg-white hover:text-black transition-all duration-300">
+                <a href="https://instagram.com/miguel_m.moshiashvili" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-neutral-400 hover:bg-white hover:text-black transition-all duration-300">
                   <Instagram size={18} />
                 </a>
                 <a href="#" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-neutral-400 hover:bg-white hover:text-black transition-all duration-300">
@@ -1574,7 +1705,7 @@ function MainApp() {
                 <a href="#" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-neutral-400 hover:bg-white hover:text-black transition-all duration-300">
                   <Twitter size={18} />
                 </a>
-                <a href="https://tiktok.com/@genomics4u" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-neutral-400 hover:bg-white hover:text-black transition-all duration-300">
+                <a href="https://tiktok.com/@miguel_m.moshiashvili" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-neutral-400 hover:bg-white hover:text-black transition-all duration-300">
                   <Music2 size={18} />
                 </a>
               </div>
