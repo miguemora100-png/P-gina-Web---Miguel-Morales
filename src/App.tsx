@@ -540,7 +540,7 @@ function MainApp() {
     },
     {
       title: "El Efecto Strauss",
-      videoUrl: "", // Removed placeholder
+      videoUrl: "https://www.youtube.com/embed/pS9wBsvAbgI",
       thumbnail: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=1280&h=720"
     }
   ];
