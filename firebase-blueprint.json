@@ -41,6 +41,54 @@
         }
       },
       "required": ["coverUrl"]
+    },
+    "message": {
+      "title": "Contact Message",
+      "description": "Stores contact messages submitted by website visitors.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Sender name."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Sender email address."
+        },
+        "message": {
+          "type": "string",
+          "description": "Content of the message."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Submission timestamp."
+        },
+        "read": {
+          "type": "boolean",
+          "description": "Whether the message has been read by admin."
+        }
+      },
+      "required": ["name", "email", "message"]
+    },
+    "subscriber": {
+      "title": "Newsletter Subscriber",
+      "description": "Stores newsletter subscription emails.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Subscriber email address."
+        },
+        "subscribedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Subscription timestamp."
+        }
+      },
+      "required": ["email"]
     }
   },
   "firestore": {
@@ -51,6 +99,14 @@
     "/books/{bookId}": {
       "schema": "book",
       "description": "Stores cover images for each book."
+    },
+    "/messages/{messageId}": {
+      "schema": "message",
+      "description": "Contact messages from readers and visitors."
+    },
+    "/subscribers/{subscriberId}": {
+      "schema": "subscriber",
+      "description": "Newsletter email subscribers list."
     }
   }
 }

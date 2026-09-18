@@ -5,10 +5,14 @@
 
 import React, { useState, useEffect, ChangeEvent, Component, ErrorInfo, ReactNode } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Mail, Instagram, BookOpen, Star, Menu, X, Globe, Linkedin, Facebook, Music2, Send, Play, Twitter, ChevronDown, LogIn, LogOut, Camera } from "lucide-react";
+import { Mail, Instagram, BookOpen, Star, Menu, X, Globe, Linkedin, Facebook, Music2, Send, Play, Twitter, ChevronDown, LogIn, LogOut, Camera, Quote, ChevronLeft, ChevronRight, Pause, Sparkles, ExternalLink, ArrowRight, Newspaper, Calendar, MapPin } from "lucide-react";
 import { db, auth } from "./firebase";
 import { doc, onSnapshot, setDoc, serverTimestamp, getDocFromServer, collection } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from "firebase/auth";
+import { Book3DMockup } from "./components/Book3DMockup";
+import { InterviewModal } from "./components/InterviewModal";
+import { BlogReviewModal } from "./components/BlogReviewModal";
+import { EventModal } from "./components/EventModal";
 
 // --- Firebase Error Handling ---
 enum OperationType {
@@ -97,6 +101,55 @@ class ErrorBoundary extends React.Component<any, any> {
   }
 }
 
+// Subtle atmospheric particle dust for cinematic motion in Hero
+const HeroAtmosphereParticles: React.FC = () => {
+  const particles = [
+    { left: "8%", delay: 0, duration: 16, size: 2.5, opacity: 0.4 },
+    { left: "16%", delay: 3, duration: 20, size: 2, opacity: 0.35 },
+    { left: "25%", delay: 7, duration: 15, size: 3.5, opacity: 0.25 },
+    { left: "34%", delay: 1.5, duration: 18, size: 2, opacity: 0.45 },
+    { left: "43%", delay: 5, duration: 22, size: 3, opacity: 0.3 },
+    { left: "52%", delay: 8, duration: 17, size: 2.5, opacity: 0.4 },
+    { left: "61%", delay: 2, duration: 19, size: 3.5, opacity: 0.2 },
+    { left: "70%", delay: 6, duration: 16, size: 2, opacity: 0.45 },
+    { left: "79%", delay: 4, duration: 21, size: 3, opacity: 0.35 },
+    { left: "88%", delay: 9, duration: 15, size: 2.5, opacity: 0.4 },
+    { left: "94%", delay: 2.5, duration: 23, size: 2, opacity: 0.3 },
+    { left: "12%", delay: 11, duration: 18, size: 3, opacity: 0.25 },
+    { left: "38%", delay: 10, duration: 17, size: 2, opacity: 0.35 },
+    { left: "67%", delay: 13, duration: 20, size: 2.5, opacity: 0.3 },
+    { left: "84%", delay: 12, duration: 19, size: 2, opacity: 0.35 }
+  ];
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-[3]">
+      {particles.map((p, idx) => (
+        <motion.div
+          key={idx}
+          className="absolute rounded-full bg-white/70 shadow-[0_0_8px_rgba(255,255,255,0.7)]"
+          style={{
+            left: p.left,
+            bottom: "-10px",
+            width: `${p.size}px`,
+            height: `${p.size}px`,
+          }}
+          animate={{
+            y: ["0vh", "-110vh"],
+            x: [0, (idx % 2 === 0 ? 25 : -25), 0],
+            opacity: [0, p.opacity, p.opacity * 0.7, 0],
+          }}
+          transition={{
+            duration: p.duration,
+            repeat: Infinity,
+            delay: p.delay,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
 export default function App() {
   return (
     <ErrorBoundary>
@@ -111,7 +164,10 @@ function MainApp() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isSubscribing, setIsSubscribing] = useState(false);
-  const [selectedSynopsis, setSelectedSynopsis] = useState<{ title: string; content: string } | null>(null);
+  const [selectedSynopsis, setSelectedSynopsis] = useState<{ title: string; subtitle?: string; content: string; amazonLink?: string } | null>(null);
+  const [isInterviewOpen, setIsInterviewOpen] = useState(false);
+  const [isBlogReviewOpen, setIsBlogReviewOpen] = useState(false);
+  const [isEventOpen, setIsEventOpen] = useState(false);
   const [bookFilter, setBookFilter] = useState<"all" | "new" | "soon">("all");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -368,7 +424,7 @@ function MainApp() {
       heroTitle1: "Miguel Morales",
       heroTitle2: "Moshiashvili",
       heroText:
-        "Escritor de thriller psicológico y doctorando en neuro-epigenética. Una voz que explora los límites de la mente, la memoria y la identidad a través del suspense.",
+        "Escritor de thriller psicológico. Una voz que explora los límites de la mente, la memoria y la identidad a través del suspense.",
       cta1: "Descubrir libros",
       cta2: "Sobre el autor",
       cta3: "Contacto",
@@ -382,7 +438,7 @@ function MainApp() {
       aboutEyebrow: "Sobre el autor",
       aboutTitle: "",
       aboutText1:
-        "Miguel Morales Moshiashvili es escritor de thriller psicológico y doctorando en neuro-epigenética, un campo que estudia cómo las experiencias pueden modificar el cerebro y moldear la mente humana. Su fascinación por los mecanismos ocultos de la memoria, la identidad y la percepción de la realidad influye profundamente en sus historias.",
+        "Miguel Morales Moshiashvili es escritor de thriller psicológico. Su fascinación por los mecanismos ocultos de la memoria, la identidad y la percepción de la realidad influye profundamente en sus historias.",
       aboutText2:
         "En sus novelas, la mente humana se convierte en un territorio lleno de sombras, donde los recuerdos pueden engañar, la verdad se fragmenta y cada secreto puede cambiarlo todo. A través de tramas intensas y atmósferas inquietantes, sus libros exploran los límites entre la realidad y la percepción, invitando al lector a adentrarse en historias donde nada es exactamente lo que parece.",
       aboutText3:
@@ -392,9 +448,9 @@ function MainApp() {
       pressEyebrow: "Prensa y actualidad",
       pressTitle: "",
       pressCards: [
-        "Entrevista exclusiva en 'Letras de Misterio': El proceso creativo tras El Señuelo.",
-        "Reseña destacada en el Blog de Suspense: 'Una voz fresca en el thriller psicológico'.",
-        "Próxima presentación en la Feria del Libro: Firma de ejemplares y charla con lectores.",
+        "Entrevista exclusiva en 'Letras de Misterio': «Lo más peligroso es no saber cuántos pasos lleva el otro de ventaja».",
+        "Reseña destacada en el blog: «El efecto Strauss» de @miguel_m.moshiashvili (5/5 ⭐).",
+        "15.ª Primavera del Libro (9, 10 y 11 de octubre de 2026): Centro Cultural Estación Mapocho, Santiago de Chile. Organiza: Editoriales de Chile.",
       ],
       reviewsEyebrow: "Reseñas",
       reviewsTitle: "",
@@ -426,7 +482,7 @@ function MainApp() {
       heroTitle1: "Miguel Morales",
       heroTitle2: "Moshiashvili",
       heroText:
-        "Psychological thriller writer and PhD candidate in neuro-epigenetics. A voice exploring the limits of the mind, memory, and identity through suspense.",
+        "Psychological thriller writer. A voice exploring the limits of the mind, memory, and identity through suspense.",
       cta1: "Discover books",
       cta2: "About the author",
       cta3: "Contact",
@@ -440,7 +496,7 @@ function MainApp() {
       aboutEyebrow: "About the author",
       aboutTitle: "",
       aboutText1:
-        "Miguel Morales Moshiashvili is a psychological thriller writer and a PhD candidate in neuro-epigenetics, a field that studies how experiences can modify the brain and shape the human mind. His fascination with the hidden mechanisms of memory, identity, and the perception of reality deeply influences his stories.",
+        "Miguel Morales Moshiashvili is a psychological thriller writer. His fascination with the hidden mechanisms of memory, identity, and the perception of reality deeply influences his stories.",
       aboutText2:
         "In his novels, the human mind becomes a territory full of shadows, where memories can deceive, truth is fragmented, and every secret can change everything. Through intense plots and unsettling atmospheres, his books explore the boundaries between reality and perception, inviting the reader to enter stories where nothing is exactly what it seems.",
       aboutText3:
@@ -450,9 +506,9 @@ function MainApp() {
       pressEyebrow: "Press & updates",
       pressTitle: "",
       pressCards: [
-        "Exclusive interview in 'Mystery Letters': The creative process behind The Decoy.",
-        "Featured review in The Suspense Blog: 'A fresh voice in psychological thrillers'.",
-        "Upcoming book fair presentation: Book signing and reader meet-up.",
+        "Exclusive interview in 'Mystery Letters': «The most dangerous thing is not knowing how many steps ahead the other person is».",
+        "Featured blog review: «The Strauss Effect» by @miguel_m.moshiashvili (5/5 ⭐).",
+        "15th Primavera del Libro (October 9, 10 & 11, 2026): Centro Cultural Estación Mapocho, Santiago, Chile. Organized by: Editoriales de Chile.",
       ],
       reviewsEyebrow: "Reviews",
       reviewsTitle: "",
@@ -527,9 +583,34 @@ function MainApp() {
   ];
 
   const reviews = [
-    { es: "Atrapante desde el principio.", en: "Gripping from the very beginning." },
-    { es: "Una lectura intensa, elegante y muy adictiva.", en: "An intense, elegant and highly addictive read." },
-    { es: "Ideal para quienes disfrutan del thriller psicológico con personalidad.", en: "Perfect for readers who enjoy psychological thrillers with personality." },
+    {
+      author: "@ladybooksdreamer",
+      role: { es: "Bookstagram · Reseña literaria", en: "Bookstagram · Literary Review" },
+      stars: 5,
+      es: "Un thriller psicológico que se adentra en la mente humana y sorprende con numerosos giros argumentales. El misterio, los secretos y la tensión convierten la novela en una lectura difícil de abandonar hasta llegar al final.",
+      en: "A psychological thriller that delves into the human mind and surprises with numerous plot twists. The mystery, secrets, and tension make the novel a read that is difficult to put down until reaching the end."
+    },
+    {
+      author: "Julietha",
+      role: { es: "Lectora · Reseña destacada", en: "Reader · Featured Review" },
+      stars: 5,
+      es: "Una lectura adictiva, emocionante y tremendamente entretenida, capaz de despertar la misma fascinación que sus primeros thrillers. La necesidad de descubrir qué sucederá y las teorías que plantea la historia la acompañaron hasta el final, convirtiéndola en una de sus mejores lecturas del año.",
+      en: "An addictive, thrilling, and tremendously entertaining read, capable of awakening the same fascination as his first thrillers. The need to discover what will happen and the theories raised by the story accompanied her until the end, making it one of her best reads of the year."
+    },
+    {
+      author: "Eva Casal Hortas",
+      role: { es: "Lectora y escritora · Valoración", en: "Reader & Writer · Review" },
+      stars: 5,
+      es: "Una novela maravillosa que la conquistó por completo y que, en su opinión, merece plenamente sus cinco estrellas.",
+      en: "A wonderful novel that completely captivated her and, in her opinion, fully deserves its five stars."
+    },
+    {
+      author: "Rocío (@romanticoslibros)",
+      role: { es: "Bookstagram · Reseña literaria", en: "Bookstagram · Literary Review" },
+      stars: 5,
+      es: "Un escalofriante thriller psicológico lleno de misterios, asesinatos y locura. Destaca la obsesión de Catherine por un escritor enigmático y la inquietante relación entre los personajes, cuyas verdaderas intenciones permanecen ocultas hasta el final.",
+      en: "A chilling psychological thriller full of mystery, murder, and madness. Highlights include Catherine's obsession with an enigmatic writer and the unsettling relationship between the characters, whose true intentions remain hidden until the end."
+    }
   ];
 
   const bookTrailers = [
@@ -547,19 +628,108 @@ function MainApp() {
 
   const ui = t[language];
 
+  // Hero carousel slides & motion state (inspired by perezreverte.com dynamic hero banner)
+  const [heroSlide, setHeroSlide] = useState(0);
+  const [isHeroPaused, setIsHeroPaused] = useState(false);
+  const [slideProgress, setSlideProgress] = useState(0);
+
+  const heroSlides = [
+    {
+      id: "el-efecto-strauss",
+      badge: "Best Seller",
+      badgeHighlight: true,
+      category: language === "es" ? "THRILLER PSICOLÓGICO" : "PSYCHOLOGICAL THRILLER",
+      title: language === "es" ? "El Efecto Strauss" : "The Strauss Effect",
+      subtitle: language === "es" ? "Oscuro · Elegante · Adictivo" : "Dark · Elegant · Addictive",
+      quote: language === "es" ? "«Deténme, o todo se repetirá»" : "«Stop me, or everything will repeat itself»",
+      desc: language === "es"
+        ? "Un célebre escritor desaparecido en la cumbre de su carrera. Un misterioso concurso para entrar en su mansión. Una verdad oculta en un laberinto de identidad y obsesión."
+        : "A celebrated writer vanished at the peak of his career. A secretive test to enter his secluded estate. A truth buried inside a maze of identity and obsession.",
+      bgImage: "https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&q=80&w=1920",
+      accentGlow: "rgba(217, 119, 6, 0.22)",
+      bookId: "el-efecto-strauss",
+      amazonUrl: "https://www.amazon.com/dp/B0H38TPVHL",
+      trailerUrl: "https://www.youtube.com/embed/pS9wBsvAbgI",
+      isBook: true,
+    },
+    {
+      id: "el-senuelo",
+      badge: language === "es" ? "Novedad 2025" : "New Release 2025",
+      badgeHighlight: true,
+      category: language === "es" ? "THRILLER PSICOLÓGICO" : "PSYCHOLOGICAL THRILLER",
+      title: language === "es" ? "El Señuelo" : "The Decoy",
+      subtitle: language === "es" ? "Un thriller psicológico inquietante" : "An unsettling psychological thriller",
+      quote: language === "es" ? "«En este juego de espejos, nadie es inocente»" : "«In this game of mirrors, no one is innocent»",
+      desc: language === "es"
+        ? "Un cadáver en la alfombra, una acusada sin recuerdos de esa noche y un expolicía al límite. Una red de engaños que nace en los despachos del poder."
+        : "A body on the rug, an accused woman with no memories, and a disgraced detective. A tangled web of deception reaching high corridors of power.",
+      bgImage: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=1920",
+      accentGlow: "rgba(14, 165, 233, 0.22)",
+      bookId: "el-senuelo",
+      amazonUrl: language === "es" ? "https://www.amazon.com/dp/B0GR1DZ5JC" : "https://www.amazon.com/dp/B0GSCGFBS8?dplnkId=f65997f5-f5e3-42ad-bc43-bc96204486b1&nodl=1",
+      trailerUrl: "https://drive.google.com/file/d/1YkKdgBMEkYGrgbTXQsc0G59RCT6Ew8Ho/preview",
+      isBook: true,
+    },
+    {
+      id: "autor",
+      badge: language === "es" ? "Sobre el Autor" : "About the Author",
+      badgeHighlight: false,
+      category: language === "es" ? "THRILLER PSICOLÓGICO" : "PSYCHOLOGICAL THRILLER",
+      title: "Miguel Morales",
+      titleSpan: "Moshiashvili",
+      subtitle: language === "es" ? "Explorando los límites de la mente y la memoria" : "Exploring the boundaries of the mind and memory",
+      quote: language === "es" ? "«¿Qué ocurre cuando la mente deja de distinguir entre la verdad y la ilusión?»" : "«What happens when the mind ceases to distinguish between truth and illusion?»",
+      desc: language === "es"
+        ? "Escritor de thriller psicológico. Su fascinación por los mecanismos ocultos de la memoria y la identidad forja novelas de suspense con una profundidad psicológica única."
+        : "Psychological thriller writer. His fascination with the hidden mechanisms of memory and identity crafts suspense novels with singular psychological depth.",
+      bgImage: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1920",
+      accentGlow: "rgba(168, 85, 247, 0.22)",
+      isAuthor: true,
+    }
+  ];
+
+  useEffect(() => {
+    if (isHeroPaused) return;
+    const interval = setInterval(() => {
+      setSlideProgress((prev) => {
+        if (prev >= 100) {
+          setHeroSlide((curr) => (curr + 1) % heroSlides.length);
+          return 0;
+        }
+        return prev + 100 / 70; // 7 seconds total
+      });
+    }, 100);
+    return () => clearInterval(interval);
+  }, [isHeroPaused, heroSlides.length]);
+
+  const goToSlide = (idx: number) => {
+    setHeroSlide(idx);
+    setSlideProgress(0);
+  };
+
+  const prevSlide = () => {
+    setHeroSlide((curr) => (curr - 1 + heroSlides.length) % heroSlides.length);
+    setSlideProgress(0);
+  };
+
+  const nextSlide = () => {
+    setHeroSlide((curr) => (curr + 1) % heroSlides.length);
+    setSlideProgress(0);
+  };
+
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 font-sans selection:bg-white selection:text-black scroll-smooth">
+    <div className="min-h-screen bg-[#0c1017] text-neutral-100 font-sans selection:bg-amber-400 selection:text-black scroll-smooth">
       {/* Page Reveal Overlay */}
       <motion.div
         initial={{ opacity: 1 }}
         animate={{ opacity: 0 }}
         transition={{ duration: 1.5, ease: "easeInOut" }}
         onAnimationComplete={() => document.body.style.overflow = "auto"}
-        className="fixed inset-0 z-[100] bg-black pointer-events-none"
+        className="fixed inset-0 z-[100] bg-[#0c1017] pointer-events-none"
       />
 
       {/* Navigation */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-neutral-950/85 backdrop-blur-md">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0c1017]/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
@@ -671,259 +841,350 @@ function MainApp() {
         )}
       </header>
 
-      {/* Hero Section */}
-      <motion.section 
+      {/* Hero Section with Cinematic Motion & Dynamic Carousel (inspired by perezreverte.com) */}
+      <section 
         id="inicio" 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1.2, ease: "easeOut" }}
-        className="relative overflow-hidden border-b border-white/10 py-12 md:py-32"
+        className="relative overflow-hidden border-b border-white/10 pt-10 pb-12 md:pt-16 md:pb-20 select-none min-h-[660px] md:min-h-[720px] flex flex-col justify-between"
+        onMouseEnter={() => setIsHeroPaused(true)}
+        onMouseLeave={() => setIsHeroPaused(false)}
       >
-        {/* Landscape Background - Mikel Santiago Style */}
-        <div className="absolute inset-0 z-0">
+        {/* Cinematic Motion Background with Ken-Burns pan/zoom & Atmospheric overlays */}
+        <AnimatePresence mode="wait">
+          <motion.div 
+            key={heroSlides[heroSlide].id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: "easeInOut" }}
+            className="absolute inset-0 z-0 overflow-hidden pointer-events-none"
+          >
+            {/* Ken Burns moving photo */}
+            <motion.img 
+              src={heroSlides[heroSlide].bgImage} 
+              alt="Cinematic Background"
+              initial={{ scale: 1, x: 0 }}
+              animate={{ 
+                scale: [1, 1.09, 1],
+                x: [0, -22, 0]
+              }}
+              transition={{ 
+                duration: 26, 
+                repeat: Infinity, 
+                ease: "easeInOut" 
+              }}
+              className="h-full w-full object-cover opacity-25 grayscale-[20%] brightness-[0.7]"
+              referrerPolicy="no-referrer"
+            />
+
+            {/* Depth Gradients */}
+            <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/70 to-neutral-950/50" />
+            <div className="absolute inset-0 bg-gradient-to-r from-neutral-950 via-neutral-950/80 to-transparent" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(10,10,10,0.85)_100%)]" />
+            
+            {/* Dynamic Accent Ambient Spotlight */}
+            <div 
+              className="absolute inset-0 transition-all duration-1000" 
+              style={{ background: `radial-gradient(ellipse at 70% 35%, ${heroSlides[heroSlide].accentGlow}, transparent 65%)` }} 
+            />
+            
+            {/* Subtle moving fog texture */}
+            <motion.div 
+              animate={{ 
+                x: [-30, 30, -30],
+                opacity: [0.08, 0.16, 0.08]
+              }}
+              transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/fog.png')] opacity-10 pointer-events-none"
+            />
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Cinematic Atmospheric Dust / Floating Particles */}
+        <HeroAtmosphereParticles />
+
+        {/* Side Floating Carousel Navigation Controls (Desktop) */}
+        <div className="hidden lg:flex absolute inset-y-0 left-4 z-40 items-center pointer-events-none">
+          <button
+            onClick={prevSlide}
+            aria-label="Anterior"
+            className="pointer-events-auto h-12 w-12 rounded-full border border-white/10 bg-black/40 backdrop-blur-md flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 hover:border-white/30 transition-all transform hover:-translate-x-1 shadow-xl"
+          >
+            <ChevronLeft size={22} />
+          </button>
+        </div>
+        <div className="hidden lg:flex absolute inset-y-0 right-4 z-40 items-center pointer-events-none">
+          <button
+            onClick={nextSlide}
+            aria-label="Siguiente"
+            className="pointer-events-auto h-12 w-12 rounded-full border border-white/10 bg-black/40 backdrop-blur-md flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 hover:border-white/30 transition-all transform hover:translate-x-1 shadow-xl"
+          >
+            <ChevronRight size={22} />
+          </button>
+        </div>
+
+        {/* Slide Content */}
+        <div className="mx-auto w-full max-w-7xl px-6 relative z-10 flex-1 flex flex-col justify-center">
+          <AnimatePresence mode="wait">
+            <motion.div 
+              key={heroSlides[heroSlide].id}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.55, ease: "easeOut" }}
+              className="grid gap-10 md:gap-16 lg:grid-cols-12 items-center"
+            >
+              {/* Left Column: Text & CTAs */}
+              <div className="lg:col-span-7 space-y-6">
+                {/* Badge & Category */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest border ${
+                    heroSlides[heroSlide].badgeHighlight
+                      ? "bg-amber-500/15 border-amber-500/40 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+                      : "bg-white/10 border-white/20 text-neutral-300"
+                  }`}>
+                    <Sparkles size={11} className={heroSlides[heroSlide].badgeHighlight ? "text-amber-400" : "text-neutral-400"} />
+                    {heroSlides[heroSlide].badge}
+                  </span>
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.3em] text-neutral-400">
+                    {heroSlides[heroSlide].category}
+                  </span>
+                </div>
+
+                {/* Main Heading */}
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-serif font-light tracking-tight text-white leading-[1.05]">
+                  {heroSlides[heroSlide].title}
+                  {heroSlides[heroSlide].titleSpan && (
+                    <span className="block text-neutral-400 font-light text-3xl sm:text-4xl md:text-5xl lg:text-6xl mt-1">
+                      {heroSlides[heroSlide].titleSpan}
+                    </span>
+                  )}
+                </h1>
+
+                {/* Subtitle */}
+                <p className="text-lg md:text-xl font-serif italic text-amber-200/90 font-medium">
+                  {heroSlides[heroSlide].subtitle}
+                </p>
+
+                {/* Quote */}
+                <blockquote className="border-l-2 border-amber-500/60 pl-4 py-1 text-base md:text-lg text-neutral-300 italic font-serif leading-relaxed bg-white/[0.02] rounded-r-lg max-w-xl">
+                  {heroSlides[heroSlide].quote}
+                </blockquote>
+
+                {/* Synopsis / Description */}
+                <p className="max-w-xl text-sm md:text-base leading-relaxed text-neutral-400">
+                  {heroSlides[heroSlide].desc}
+                </p>
+
+                {/* Action Buttons */}
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  {heroSlides[heroSlide].isBook ? (
+                    <>
+                      {heroSlides[heroSlide].amazonUrl && (
+                        <a 
+                          href={heroSlides[heroSlide].amazonUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-2xl bg-white px-7 py-3.5 text-xs sm:text-sm font-bold text-neutral-950 shadow-xl shadow-white/10 transition hover:scale-105 hover:bg-neutral-100"
+                        >
+                          <BookOpen size={16} />
+                          {language === "es" ? "Comprar en Amazon" : "Buy on Amazon"}
+                          <ExternalLink size={12} className="opacity-60" />
+                        </a>
+                      )}
+                      {heroSlides[heroSlide].trailerUrl && (
+                        <button
+                          onClick={() => setSelectedTrailer(heroSlides[heroSlide].trailerUrl!)}
+                          className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 backdrop-blur-md px-6 py-3.5 text-xs sm:text-sm font-bold text-white transition hover:bg-white/15 hover:border-white/40 hover:scale-105"
+                        >
+                          <Play size={14} className="fill-white" />
+                          {language === "es" ? "Ver booktrailer" : "Watch booktrailer"}
+                        </button>
+                      )}
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const currentBook = books.find(b => b.id === heroSlides[heroSlide].bookId);
+                          if (currentBook) {
+                            setSelectedSynopsis({
+                              title: language === "es" ? currentBook.title : (currentBook.titleEn || currentBook.title),
+                              subtitle: language === "es" ? currentBook.subtitle : (currentBook.subtitleEn || currentBook.subtitle),
+                              content: language === "es" ? (currentBook.synopsis || "") : (currentBook.synopsisEn || currentBook.synopsis || ""),
+                              amazonLink: language === "es" ? currentBook.link : (currentBook.linkEn || currentBook.link)
+                            });
+                          }
+                        }}
+                        className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 backdrop-blur-md px-5 py-3.5 text-xs sm:text-sm font-semibold text-neutral-200 transition hover:text-white hover:bg-white/15 hover:border-white/40 hover:scale-105 cursor-pointer shadow-lg"
+                      >
+                        <BookOpen size={15} className="text-amber-400" />
+                        {language === "es" ? "Sinopsis completa" : "Full synopsis"}
+                        <ArrowRight size={13} className="opacity-60" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <a 
+                        href="#libros" 
+                        className="inline-flex items-center gap-2 rounded-2xl bg-white px-7 py-3.5 text-xs sm:text-sm font-bold text-neutral-950 shadow-xl shadow-white/10 transition hover:scale-105 hover:bg-neutral-100"
+                      >
+                        <BookOpen size={16} />
+                        {ui.cta1}
+                      </a>
+                      <a 
+                        href="#autor" 
+                        className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 backdrop-blur-md px-6 py-3.5 text-xs sm:text-sm font-bold text-white transition hover:bg-white/15 hover:scale-105"
+                      >
+                        {ui.cta2}
+                      </a>
+                      <a 
+                        href="#contacto" 
+                        className="inline-flex items-center gap-2 rounded-2xl border border-white/15 px-6 py-3.5 text-xs sm:text-sm font-medium text-neutral-300 transition hover:text-white hover:bg-white/5"
+                      >
+                        {ui.cta3}
+                      </a>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: 3D Book Mockup or Author Portrait */}
+              <div className="lg:col-span-5 flex justify-center py-6">
+                {heroSlides[heroSlide].isBook ? (() => {
+                  const bookId = heroSlides[heroSlide].bookId!;
+                  const currentBook = books.find(b => b.id === bookId) || books[1];
+                  const heroCoverUrl = language === "es" 
+                    ? (bookData[bookId]?.coverUrl || currentBook.image) 
+                    : (bookData[bookId]?.coverUrlEn || currentBook.imageEn || currentBook.image);
+                  const heroSpineColor = language === "es" 
+                    ? bookData[bookId]?.spineColor 
+                    : bookData[bookId]?.spineColorEn;
+
+                  return (
+                    <div className="w-full max-w-[270px] sm:max-w-[300px] flex justify-center">
+                      <Book3DMockup
+                        id={bookId}
+                        title={currentBook.title}
+                        titleEn={currentBook.titleEn}
+                        subtitle={currentBook.subtitle}
+                        subtitleEn={currentBook.subtitleEn}
+                        synopsis={currentBook.synopsis}
+                        synopsisEn={currentBook.synopsisEn}
+                        coverUrl={heroCoverUrl}
+                        spineColor={heroSpineColor}
+                        language={language}
+                        isAdmin={isAdmin}
+                        onCoverUpload={(e, isEn) => handleBookCoverUpload(e, bookId, isEn)}
+                        isHero={true}
+                      />
+                    </div>
+                  );
+                })() : (
+                  /* Author Portrait Presentation */
+                  <div className="relative group/hero-author w-full max-w-[280px] sm:max-w-[320px]">
+                    <div className="relative rounded-3xl overflow-hidden border border-white/15 bg-neutral-900 shadow-2xl drop-shadow-[0_25px_35px_rgba(0,0,0,0.85)]">
+                      <img 
+                        src={authorPhoto || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400&h=400"} 
+                        alt="Miguel Morales Moshiashvili"
+                        className="w-full aspect-[4/5] object-cover transition-transform duration-700 group-hover/hero-author:scale-105"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/20 to-transparent" />
+                      
+                      {isAdmin && (
+                        <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover/hero-author:opacity-100 transition-opacity cursor-pointer backdrop-blur-sm z-30">
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white">
+                              <Camera size={20} />
+                            </div>
+                            <span className="text-xs font-bold uppercase tracking-wider text-white">Cambiar foto</span>
+                          </div>
+                          <input type="file" className="hidden" onChange={handlePhotoUpload} accept="image/*" />
+                        </label>
+                      )}
+
+                      <div className="absolute bottom-0 inset-x-0 p-5 z-20">
+                        <div className="text-lg font-serif font-bold text-white leading-tight">
+                          Miguel Morales Moshiashvili
+                        </div>
+                        <div className="text-xs text-amber-300/90 font-medium mt-1">
+                          {language === "es" ? "Escritor de thriller psicológico" : "Psychological thriller writer"}
+                        </div>
+                      </div>
+                    </div>
+                    {/* Shadow */}
+                    <div className="absolute -bottom-6 left-6 right-6 h-8 bg-black/85 blur-3xl rounded-full opacity-60" />
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </section>
+
+      {/* Cintillo continuo en movimiento - Novela en curso (Continuous Marquee Ticker) */}
+      <div className="relative z-30 border-y border-amber-500/30 bg-[#0e1422] py-4 overflow-hidden shadow-2xl backdrop-blur-md">
+        {/* Soft edge fade masks for seamless entering/exiting */}
+        <div className="absolute inset-y-0 left-0 w-24 md:w-36 bg-gradient-to-r from-[#0c1017] to-transparent z-10 pointer-events-none" />
+        <div className="absolute inset-y-0 right-0 w-24 md:w-36 bg-gradient-to-l from-[#0c1017] to-transparent z-10 pointer-events-none" />
+        
+        {/* Amber cinematic undertone */}
+        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-amber-900/10 to-amber-500/5 pointer-events-none" />
+
+        <motion.div
+          className="flex w-max items-center whitespace-nowrap"
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{
+            repeat: Infinity,
+            ease: "linear",
+            duration: 34,
+          }}
+        >
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="flex items-center gap-8 md:gap-12 pr-8 md:pr-12 text-xs md:text-sm tracking-[0.25em] font-serif uppercase">
+              <span className="inline-flex items-center gap-2.5 font-bold text-amber-300 drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                </span>
+                <Sparkles size={14} className="text-amber-400" />
+                {language === "es" ? "PRÓXIMAMENTE: NUEVA NOVELA EN CURSO" : "COMING SOON: NEW NOVEL IN PROGRESS"}
+              </span>
+              <span className="text-amber-500/40 font-sans text-xs">✦</span>
+              <span className="text-slate-200 font-medium tracking-[0.3em]">
+                {language === "es" ? "THRILLER PSICOLÓGICO · EN FASE DE CREACIÓN" : "PSYCHOLOGICAL THRILLER · IN PROGRESS"}
+              </span>
+              <span className="text-amber-500/40 font-sans text-xs">✦</span>
+              <span className="text-slate-400 tracking-[0.25em]">
+                MIGUEL MORALES MOSHIASHVILI
+              </span>
+              <span className="text-amber-500/40 font-sans text-xs">✦</span>
+              <span className="text-amber-200/90 italic font-serif tracking-[0.15em] lowercase first-letter:uppercase">
+                {language === "es" ? "«Donde los recuerdos se quiebran, comienza el juego»" : "«Where memories shatter, the game begins»"}
+              </span>
+              <span className="text-amber-500/40 font-sans text-xs">✦</span>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* Secciones inferiores con fondos atmosféricos distintivos de thriller psicológico (estilo Mikel Santiago) */}
+      <div className="relative text-neutral-100">
+
+      {/* SECCIÓN 1: LIBROS - Atmósfera: Niebla y misterio atlántico-costero estilo thriller psicológico */}
+      <section id="libros" className="relative py-32 overflow-hidden bg-[#070b14] border-b border-slate-800/80">
+        {/* Fondo evocador transparente de thriller: Costa y acantilados brumosos */}
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
           <img 
-            src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1920" 
-            alt="Landscape Background"
-            className="h-full w-full object-cover opacity-30 grayscale brightness-50"
+            src="https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&q=80&w=2000" 
+            alt="Atmospheric Coastline Thriller" 
+            className="w-full h-full object-cover object-center opacity-30 md:opacity-35 filter contrast-125 brightness-95"
             referrerPolicy="no-referrer"
           />
-          {/* Fog/Atmosphere overlays */}
-          <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/60 to-transparent" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(10,10,10,0.9)_100%)]" />
-          <motion.div 
-            animate={{ 
-              x: [-20, 20, -20],
-              opacity: [0.1, 0.2, 0.1]
-            }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/fog.png')] opacity-10 pointer-events-none"
-          />
+          {/* Capa de contraste transparente para que sirva únicamente de fondo y mantenga total legibilidad */}
+          <div className="absolute inset-0 bg-[#070b14]/65" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#070b14] via-transparent to-[#070b14]" />
         </div>
 
-        <div className="mx-auto grid max-w-7xl gap-12 md:gap-24 px-6 md:grid-cols-2 md:items-start relative z-10">
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
-            className="relative z-20 pt-8 md:pt-10"
-          >
-            <h1 className="max-w-2xl text-5xl font-light leading-tight md:text-6xl lg:text-7xl xl:text-8xl tracking-[-0.04em] font-serif">
-              <span className="block text-white/60 tracking-[0.4em] font-bold uppercase text-[10px] md:text-xs mb-8">{ui.label}</span>
-              <motion.span 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 1, delay: 0.8 }}
-                className="block leading-[0.85] text-white whitespace-nowrap"
-              >
-                {ui.heroTitle1}
-              </motion.span>
-              <motion.span 
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 1, delay: 1 }}
-                className="block leading-[0.85] text-neutral-500 mt-1"
-              >
-                {ui.heroTitle2}
-              </motion.span>
-            </h1>
-            <p className="mt-4 max-w-xl text-lg leading-relaxed text-neutral-400">{ui.heroText}</p>
-            <div className="mt-6 flex flex-wrap gap-4">
-              <div className="flex gap-4">
-                <a href="#libros" className="rounded-2xl border border-white/20 bg-white px-8 py-4 text-sm font-bold text-neutral-950 shadow-lg shadow-white/10 transition hover:scale-[1.02]">
-                  {ui.cta1}
-                </a>
-                <a href="#autor" className="rounded-2xl border border-white/20 px-8 py-4 text-sm font-bold text-white transition hover:bg-white/5">
-                  {ui.cta2}
-                </a>
-              </div>
-              <a href="#contacto" className="rounded-2xl border border-white/20 px-8 py-4 text-sm font-bold text-white transition hover:bg-white/5">
-                {ui.cta3}
-              </a>
-            </div>
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.8, ease: "easeOut" }}
-            className="relative z-10 flex justify-center md:justify-end pt-16 md:pt-12 pb-12"
-          >
-            {(() => {
-              const heroCoverUrl = language === "es" ? (bookData["el-efecto-strauss"]?.coverUrl || books[1].image) : (bookData["el-efecto-strauss"]?.coverUrlEn || books[1].imageEn || books[1].image);
-              const isMockup = heroCoverUrl.includes("mockup");
-              
-              if (isMockup) {
-                return (
-                  <div className="relative group/hero-book w-full max-w-[280px]">
-                    <motion.div 
-                      whileHover={{ y: -10, rotateY: -6, rotateX: 2, scale: 1.03 }}
-                      transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                      className="relative z-20 drop-shadow-[0_25px_25px_rgba(0,0,0,0.65)] cursor-pointer"
-                    >
-                      <img 
-                        src={heroCoverUrl} 
-                        alt={language === "es" ? "El Efecto Strauss" : "The Strauss Effect"} 
-                        className="w-full h-auto object-contain rounded-lg shadow-2xl" 
-                        referrerPolicy="no-referrer"
-                      />
-                      
-                      {isAdmin && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 opacity-0 group-hover/hero-book:opacity-100 transition-opacity cursor-pointer backdrop-blur-md z-40 gap-6 rounded-lg">
-                          <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-es">
-                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-es:bg-white group-hover/upload-es:text-black transition-colors">
-                              <Globe size={20} />
-                            </div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-white">Portada ES</span>
-                            <input 
-                              type="file" 
-                              className="hidden" 
-                              onChange={(e) => handleBookCoverUpload(e, "el-efecto-strauss", false)} 
-                              accept="image/*" 
-                            />
-                          </label>
-                          <div className="w-12 h-px bg-white/20" />
-                          <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-en">
-                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-en:bg-white group-hover/upload-en:text-black transition-colors">
-                              <Globe size={20} />
-                            </div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-white">Portada EN</span>
-                            <input 
-                              type="file" 
-                              className="hidden" 
-                              onChange={(e) => handleBookCoverUpload(e, "el-efecto-strauss", true)} 
-                              accept="image/*" 
-                            />
-                          </label>
-                        </div>
-                      )}
-                    </motion.div>
-
-                    {/* Shelf Shadow */}
-                    <div className="absolute -bottom-8 left-8 right-8 h-8 bg-black/75 blur-3xl rounded-full opacity-60 group-hover/hero-book:opacity-100 transition-opacity duration-1000" />
-                    
-                    <div className="mt-16 p-6 rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-xl relative z-30">
-                      <div className="text-[10px] uppercase tracking-[0.4em] text-neutral-600 font-black">{ui.featured}</div>
-                      <div className="mt-4 text-3xl font-semibold leading-none tracking-tight font-serif">
-                        {language === "es" ? "El Efecto Strauss" : "The Strauss Effect"}
-                      </div>
-                      <div className="mt-2 text-[10px] uppercase tracking-[0.3em] text-neutral-500 font-bold">
-                        {language === "es" ? books[1].subtitle : books[1].subtitleEn}
-                      </div>
-                      <div className="mt-6 h-px w-full bg-white/10" />
-                      <p className="mt-5 text-sm leading-relaxed text-neutral-400 italic">{ui.featuredText}</p>
-                    </div>
-                  </div>
-                );
-              }
-
-              return (
-                <div className="relative group/hero-book [perspective:3000px] w-full max-w-[280px]">
-                  <div className="relative aspect-[3/4.2] w-full transition-all duration-1000 [transform-style:preserve-3d] group-hover/hero-book:[transform:rotateY(-15deg)_rotateX(2deg)_rotateZ(-1deg)]">
-                    {/* Front Cover */}
-                    <div className="absolute inset-0 z-20 rounded-r-[2px] overflow-hidden border-y border-r border-white/10 bg-neutral-900 shadow-2xl [transform:translateZ(20px)]">
-                      <img 
-                        src={heroCoverUrl} 
-                        alt={language === "es" ? "El Efecto Strauss" : "The Strauss Effect"} 
-                        className="h-full w-full object-cover transition-all duration-700" 
-                        referrerPolicy="no-referrer"
-                      />
-                      {/* Spine Crease */}
-                      <div className="absolute inset-y-0 left-0 w-[3px] bg-black/30 z-30" />
-                      <div className="absolute inset-y-0 left-[3px] w-[1px] bg-white/5 z-30" />
-
-                      {isAdmin && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 opacity-0 group-hover/hero-book:opacity-100 transition-opacity cursor-pointer backdrop-blur-md z-40 gap-6">
-                          <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-es">
-                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-es:bg-white group-hover/upload-es:text-black transition-colors">
-                              <Globe size={20} />
-                            </div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-white">Portada ES</span>
-                            <input 
-                              type="file" 
-                              className="hidden" 
-                              onChange={(e) => handleBookCoverUpload(e, "el-efecto-strauss", false)} 
-                              accept="image/*" 
-                            />
-                          </label>
-                          <div className="w-12 h-px bg-white/20" />
-                          <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-en">
-                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-en:bg-white group-hover/upload-en:text-black transition-colors">
-                              <Globe size={20} />
-                            </div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-white">Portada EN</span>
-                            <input 
-                              type="file" 
-                              className="hidden" 
-                              onChange={(e) => handleBookCoverUpload(e, "el-efecto-strauss", true)} 
-                              accept="image/*" 
-                            />
-                          </label>
-                        </div>
-                      )}
-                      
-                      {/* Lighting overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-white/5 pointer-events-none" />
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.1),transparent_70%)] pointer-events-none" />
-                    </div>
-                    
-                    {/* Spine depth */}
-                    <div 
-                      className="absolute inset-y-0 left-0 w-[40px] [transform:rotateY(-90deg)_translateZ(20px)] origin-left border-r border-white/10 shadow-inner overflow-hidden" 
-                      style={{ backgroundColor: (language === "es" ? bookData["el-efecto-strauss"]?.spineColor : bookData["el-efecto-strauss"]?.spineColorEn) || '#171717' }}
-                    >
-                      {/* Spine Texture & Lighting */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
-                      <div className="absolute inset-x-0 top-4 h-px bg-white/5" />
-                      <div className="absolute inset-x-0 bottom-4 h-px bg-white/5" />
-                      <div className="absolute inset-0 flex items-center justify-center [writing-mode:vertical-rl] rotate-180 py-8">
-                        <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.4em] whitespace-nowrap">
-                          {language === "es" ? "El Efecto Strauss" : "The Strauss Effect"}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    {/* Pages depth (Right) */}
-                    <div className="absolute inset-y-[2px] right-0 w-[36px] bg-[#f4f1ea] [transform:rotateY(90deg)_translateZ(2px)] origin-right border-l border-black/5">
-                      <div className="w-full h-full opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(transparent, transparent 1px, #000 2px)' }} />
-                    </div>
-
-                    {/* Top Pages */}
-                    <div className="absolute inset-x-[2px] top-0 h-[36px] bg-[#f4f1ea] [transform:rotateX(90deg)_translateZ(2px)] origin-top border-b border-black/5">
-                      <div className="w-full h-full opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 1px, #000 2px)' }} />
-                    </div>
-
-                    {/* Back Cover */}
-                    <div 
-                      className="absolute inset-0 rounded-sm [transform:translateZ(-20px)] shadow-2xl border border-white/5" 
-                      style={{ backgroundColor: (language === "es" ? bookData["el-efecto-strauss"]?.spineColor : bookData["el-efecto-strauss"]?.spineColorEn) || '#171717' }}
-                    >
-                      <div className="absolute inset-0 bg-black/20" />
-                    </div>
-                  </div>
-
-                  {/* Shelf Shadow */}
-                  <div className="absolute -bottom-12 left-8 right-8 h-8 bg-black/80 blur-3xl rounded-full opacity-0 group-hover/hero-book:opacity-100 transition-opacity duration-1000" />
-                  
-                  <div className="mt-16 p-6 rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-xl relative z-30">
-                    <div className="text-[10px] uppercase tracking-[0.4em] text-neutral-600 font-black">{ui.featured}</div>
-                    <div className="mt-4 text-3xl font-semibold leading-none tracking-tight font-serif">
-                      {language === "es" ? "El Efecto Strauss" : "The Strauss Effect"}
-                    </div>
-                    <div className="mt-2 text-[10px] uppercase tracking-[0.3em] text-neutral-500 font-bold">
-                      {language === "es" ? books[1].subtitle : books[1].subtitleEn}
-                    </div>
-                    <div className="mt-6 h-px w-full bg-white/10" />
-                    <p className="mt-5 text-sm leading-relaxed text-neutral-400 italic">{ui.featuredText}</p>
-                  </div>
-                </div>
-              );
-            })()}
-          </motion.div>
-        </div>
-      </motion.section>
-
-      {/* Books Section */}
-      <section id="libros" className="mx-auto max-w-7xl px-6 py-32">
+        <div className="mx-auto max-w-7xl px-6 relative z-10">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
           <motion.div 
             initial={{ opacity: 0, y: 40 }}
@@ -983,173 +1244,49 @@ function MainApp() {
             .map((book, idx) => (
             <motion.article 
               key={book.title} 
+              id={book.id}
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: idx * 0.1 }}
-              className="group rounded-[2.5rem] border border-white/5 bg-white/[0.02] p-8 shadow-xl shadow-black/20 transition hover:bg-white/[0.04] hover:border-white/10"
+              className="group rounded-[2.5rem] border border-slate-700/60 bg-[#0d1527]/85 backdrop-blur-xl p-8 shadow-[0_20px_50px_rgba(0,0,0,0.6)] transition hover:bg-[#121d36]/90 hover:border-slate-500/70"
             >
               {(() => {
                 const coverUrlVal = language === "es" ? (bookData[book.id]?.coverUrl || book.image) : (bookData[book.id]?.coverUrlEn || book.imageEn || book.image);
-                const isMockup = coverUrlVal.includes("mockup");
+                const spineColorVal = language === "es" ? bookData[book.id]?.spineColor : bookData[book.id]?.spineColorEn;
                 
                 return (
-                  <div className="grid gap-12 md:grid-cols-[200px_1fr] md:items-start">
-                    {/* Cover Area */}
-                    {isMockup ? (
-                      <div className="relative group/book-card w-full max-w-[200px] mx-auto md:mx-0">
-                        <motion.div
-                          whileHover={{ y: -8, rotateY: -5, rotateX: 2, scale: 1.02 }}
-                          transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                          className="relative z-20 drop-shadow-[0_15px_15px_rgba(0,0,0,0.55)] cursor-pointer"
-                        >
-                          <img
-                            src={coverUrlVal}
-                            alt={language === "es" ? book.title : (book.titleEn || book.title)}
-                            className="w-full h-auto object-contain rounded-lg shadow-2xl"
-                            referrerPolicy="no-referrer"
-                          />
-
-                          {isAdmin && (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 opacity-0 group-hover/book-card:opacity-100 transition-opacity cursor-pointer backdrop-blur-md z-40 gap-6 rounded-lg">
-                              <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-es">
-                                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-es:bg-white group-hover/upload-es:text-black transition-colors">
-                                  <Globe size={18} />
-                                </div>
-                                <span className="text-[9px] font-black uppercase tracking-widest text-white">Portada ES</span>
-                                <input 
-                                  type="file" 
-                                  className="hidden" 
-                                  onChange={(e) => handleBookCoverUpload(e, book.id, false)} 
-                                  accept="image/*" 
-                                />
-                              </label>
-                              <div className="w-10 h-px bg-white/20" />
-                              <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-en">
-                                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-en:bg-white group-hover/upload-en:text-black transition-colors">
-                                  <Globe size={18} />
-                                </div>
-                                <span className="text-[9px] font-black uppercase tracking-widest text-white">Portada EN</span>
-                                <input 
-                                  type="file" 
-                                  className="hidden" 
-                                  onChange={(e) => handleBookCoverUpload(e, book.id, true)} 
-                                  accept="image/*" 
-                                />
-                              </label>
-                            </div>
-                          )}
-                        </motion.div>
-
-                        {/* Shelf Shadow */}
-                        <div className="absolute -bottom-4 left-0 right-0 h-12 bg-black/90 blur-3xl rounded-full opacity-30 group-hover/book-card:opacity-60 transition-opacity duration-1000 scale-x-110" />
-                      </div>
-                    ) : (
-                      <div className={`relative group/book-card [perspective:3000px] w-full max-w-[220px] mx-auto md:mx-0 py-8 ${book.id === 'el-efecto-strauss' ? 'after:absolute after:inset-0 after:bg-white/5 after:blur-3xl after:rounded-full after:opacity-20 after:pointer-events-none' : ''}`}>
-                        <div className={`relative aspect-[2/3.2] w-full transition-all duration-1000 [transform-style:preserve-3d] [transform:rotateY(-8deg)_rotateX(1deg)] group-hover/book-card:[transform:rotateY(-18deg)_rotateX(3deg)_translateZ(30px)] ${book.id === 'el-efecto-strauss' ? 'ring-1 ring-white/20' : ''}`}>
-                          {/* Front Cover */}
-                          <div className="absolute inset-0 z-20 rounded-r-[2px] overflow-hidden border-y border-r border-white/10 shadow-2xl [transform:translateZ(20px)]">
-                            <img
-                              src={coverUrlVal}
-                              alt={language === "es" ? book.title : (book.titleEn || book.title)}
-                              className="h-full w-full object-cover transition-all duration-700"
-                              referrerPolicy="no-referrer"
-                            />
-                            {/* Spine Crease */}
-                            <div className="absolute inset-y-0 left-0 w-[2px] bg-black/40 z-30" />
-                            <div className="absolute inset-y-0 left-[2px] w-[1px] bg-white/10 z-30" />
-
-                            {isAdmin && (
-                              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 opacity-0 group-hover/book-card:opacity-100 transition-opacity cursor-pointer backdrop-blur-md z-40 gap-6">
-                                <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-es">
-                                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-es:bg-white group-hover/upload-es:text-black transition-colors">
-                                    <Globe size={18} />
-                                  </div>
-                                  <span className="text-[9px] font-black uppercase tracking-widest text-white">Portada ES</span>
-                                  <input 
-                                    type="file" 
-                                    className="hidden" 
-                                    onChange={(e) => handleBookCoverUpload(e, book.id, false)} 
-                                    accept="image/*" 
-                                  />
-                                </label>
-                                <div className="w-10 h-px bg-white/20" />
-                                <label className="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform group/upload-en">
-                                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 group-hover/upload-en:bg-white group-hover/upload-en:text-black transition-colors">
-                                    <Globe size={18} />
-                                  </div>
-                                  <span className="text-[9px] font-black uppercase tracking-widest text-white">Portada EN</span>
-                                  <input 
-                                    type="file" 
-                                    className="hidden" 
-                                    onChange={(e) => handleBookCoverUpload(e, book.id, true)} 
-                                    accept="image/*" 
-                                  />
-                                </label>
-                              </div>
-                            )}
-                            {/* Lighting effects */}
-                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 opacity-30 group-hover:opacity-50 transition-opacity duration-700" />
-                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.05),transparent_70%)]" />
-                            
-                            {/* Special Shine for El Efecto Strauss */}
-                            {book.id === "el-efecto-strauss" && (
-                              <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-[30deg] animate-shine" />
-                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_50%)] animate-pulse" />
-                              </div>
-                            )}
-                          </div>
-                          
-                          {/* Spine */}
-                          <div 
-                            className="absolute inset-y-0 left-0 w-[40px] [transform:rotateY(-90deg)_translateZ(20px)] origin-left border-r border-white/10 shadow-inner overflow-hidden"
-                            style={{ backgroundColor: (language === "es" ? bookData[book.id]?.spineColor : bookData[book.id]?.spineColorEn) || '#171717' }}
-                          >
-                            <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
-                            <div className="absolute inset-x-0 top-4 h-px bg-white/5" />
-                            <div className="absolute inset-x-0 bottom-4 h-px bg-white/5" />
-                            <div className="absolute inset-0 flex items-center justify-center [writing-mode:vertical-rl] rotate-180 py-4">
-                              <span className="text-[8px] font-black text-white/40 uppercase tracking-[0.4em] whitespace-nowrap">
-                                {language === "es" ? book.title : book.titleEn}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          {/* Pages (Right side) */}
-                          <div className="absolute inset-y-[2px] right-0 w-[36px] bg-[#f4f1ea] [transform:rotateY(90deg)_translateZ(2px)] origin-right border-l border-black/5">
-                            <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(transparent, transparent 1px, #000 2px)' }} />
-                          </div>
-
-                          {/* Top Pages */}
-                          <div className="absolute inset-x-[2px] top-0 h-[36px] bg-[#f4f1ea] [transform:rotateX(90deg)_translateZ(2px)] origin-top border-b border-black/5">
-                            <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 1px, #000 2px)' }} />
-                          </div>
-
-                          {/* Back Cover */}
-                          <div 
-                            className="absolute inset-0 rounded-sm [transform:translateZ(-20px)] shadow-2xl border border-white/5" 
-                            style={{ backgroundColor: (language === "es" ? bookData[book.id]?.spineColor : bookData[book.id]?.spineColorEn) || '#171717' }}
-                          >
-                            <div className="absolute inset-0 bg-black/20" />
-                          </div>
-                        </div>
-                        
-                        {/* Shelf Shadow */}
-                        <div className="absolute -bottom-4 left-0 right-0 h-12 bg-black/90 blur-3xl rounded-full opacity-40 group-hover/book-card:opacity-70 transition-opacity duration-1000 scale-x-110" />
-                      </div>
-                    )}
+                  <div className="grid gap-10 md:grid-cols-[240px_1fr] md:items-start">
+                    {/* 3D Interactive Book Mockup with 360° rotation */}
+                    <div className="w-full max-w-[240px] mx-auto md:mx-0 flex justify-center">
+                      <Book3DMockup
+                        id={book.id}
+                        title={book.title}
+                        titleEn={book.titleEn}
+                        subtitle={book.subtitle}
+                        subtitleEn={book.subtitleEn}
+                        synopsis={book.synopsis}
+                        synopsisEn={book.synopsisEn}
+                        coverUrl={coverUrlVal}
+                        spineColor={spineColorVal}
+                        language={language}
+                        isAdmin={isAdmin}
+                        onCoverUpload={(e, isEn) => handleBookCoverUpload(e, book.id, isEn)}
+                      />
+                    </div>
                 <div>
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex flex-wrap items-center gap-3 mb-2">
                     <h3 className={`text-3xl font-bold tracking-tight font-serif ${book.id === 'el-efecto-strauss' ? 'bg-gradient-to-r from-white via-white/80 to-white bg-clip-text text-transparent' : ''}`}>
                       {language === "es" ? book.title : book.titleEn}
                     </h3>
-                    {book.status === "new" && (
-                      <span className="px-2 py-0.5 rounded-full bg-white text-neutral-950 text-[8px] font-black uppercase tracking-wider">New</span>
+                    {book.id === "el-senuelo" && (
+                      <span className="px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 text-[10px] font-bold tracking-wider uppercase shadow-[0_0_15px_rgba(245,158,11,0.15)]">
+                        {language === "es" ? "Novedad 2025" : "New Release 2025"}
+                      </span>
                     )}
-                    {book.status === "soon" && (
-                      <span className={`px-2 py-0.5 rounded-full border border-white/20 text-white text-[8px] font-black uppercase tracking-wider ${book.id === 'el-efecto-strauss' ? 'bg-white/10 animate-pulse' : ''}`}>
-                        {language === "es" ? "Próximamente" : "Soon"}
+                    {book.id === "el-efecto-strauss" && (
+                      <span className="px-3 py-1 rounded-full bg-white text-neutral-950 text-[10px] font-black uppercase tracking-wider shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+                        Best Seller
                       </span>
                     )}
                   </div>
@@ -1178,11 +1315,13 @@ function MainApp() {
                       <button 
                         onClick={() => setSelectedSynopsis({
                           title: language === "es" ? book.title : book.titleEn,
-                          content: language === "es" ? (book.synopsis || "") : (book.synopsisEn || "")
+                          subtitle: language === "es" ? book.subtitle : book.subtitleEn,
+                          content: language === "es" ? (book.synopsis || "") : (book.synopsisEn || ""),
+                          amazonLink: language === "es" ? book.link : (book.linkEn || book.link)
                         })}
-                        className="text-sm font-bold text-neutral-500 hover:text-white transition-colors flex items-center gap-2"
+                        className="text-sm font-bold text-neutral-400 hover:text-white transition-colors flex items-center gap-2 cursor-pointer"
                       >
-                        <BookOpen size={16} />
+                        <BookOpen size={16} className="text-amber-400" />
                         {ui.synopsis}
                       </button>
                     )}
@@ -1234,11 +1373,25 @@ function MainApp() {
         </motion.article>
       ))}
         </div>
+        </div>
       </section>
 
-      {/* Author Section */}
-      <section id="autor" className="relative py-32 overflow-hidden bg-white/[0.01] border-y border-white/5">
-        <div className="mx-auto grid max-w-7xl gap-16 px-6 md:grid-cols-[1fr_1.2fr] md:items-center">
+      {/* SECCIÓN 2: AUTOR - Atmósfera: Bosque brumoso y misterio psicológico */}
+      <section id="autor" className="relative py-32 overflow-hidden bg-[#070911] border-b border-amber-950/40">
+        {/* Fondo evocador transparente de thriller: Bosque en la niebla nocturna */}
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+          <img 
+            src="https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&q=80&w=2000" 
+            alt="Misty Forest Thriller" 
+            className="w-full h-full object-cover object-center opacity-30 md:opacity-35 filter contrast-125 brightness-95"
+            referrerPolicy="no-referrer"
+          />
+          {/* Capa de contraste transparente para que sirva únicamente de fondo */}
+          <div className="absolute inset-0 bg-[#070911]/65" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#070911] via-transparent to-[#070911]" />
+        </div>
+
+        <div className="mx-auto grid max-w-7xl gap-16 px-6 md:grid-cols-[1fr_1.2fr] md:items-center relative z-10">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -1285,9 +1438,22 @@ function MainApp() {
         </div>
       </section>
 
-      {/* Booktrailers Section */}
-      <section id="trailers" className="py-32 bg-neutral-900/30">
-        <div className="mx-auto max-w-7xl px-6">
+      {/* SECCIÓN 3: BOOKTRAILERS - Atmósfera: Sala de proyección noir de suspense */}
+      <section id="trailers" className="relative py-32 overflow-hidden bg-[#05080f] border-b border-cyan-950/50">
+        {/* Fondo evocador transparente de thriller: Proyección cinematográfica noir */}
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+          <img 
+            src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&q=80&w=2000" 
+            alt="Cinematic Screening Thriller" 
+            className="w-full h-full object-cover object-center opacity-30 md:opacity-35 filter contrast-125 brightness-95"
+            referrerPolicy="no-referrer"
+          />
+          {/* Capa de contraste transparente para que sirva únicamente de fondo */}
+          <div className="absolute inset-0 bg-[#05080f]/70" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#05080f] via-transparent to-[#05080f]" />
+        </div>
+
+        <div className="mx-auto max-w-7xl px-6 relative z-10">
           <motion.div 
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1344,9 +1510,22 @@ function MainApp() {
         </div>
       </section>
 
-      {/* Press Section */}
-      <section id="prensa" className="py-32 border-b border-white/5">
-        <div className="mx-auto max-w-7xl px-6">
+      {/* SECCIÓN 4: PRENSA - Atmósfera: Archivo de casos / hemeroteca y crónica literaria */}
+      <section id="prensa" className="relative py-32 overflow-hidden bg-[#060913] border-b border-slate-800/70">
+        {/* Fondo evocador transparente de thriller: Hemeroteca y archivo de casos */}
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+          <img 
+            src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=2000" 
+            alt="Press Archive Thriller" 
+            className="w-full h-full object-cover object-center opacity-30 md:opacity-35 filter grayscale contrast-130 brightness-95"
+            referrerPolicy="no-referrer"
+          />
+          {/* Capa de contraste transparente para que sirva únicamente de fondo */}
+          <div className="absolute inset-0 bg-[#060913]/70" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#060913] via-transparent to-[#060913]" />
+        </div>
+
+        <div className="mx-auto max-w-7xl px-6 relative z-10">
           <motion.div 
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1358,27 +1537,149 @@ function MainApp() {
             {ui.pressTitle && <h2 className="text-4xl font-bold md:text-6xl tracking-tight">{ui.pressTitle}</h2>}
           </motion.div>
           <div className="grid gap-8 md:grid-cols-3">
-            {ui.pressCards.map((card, idx) => (
-              <motion.div 
-                key={idx}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                className="group p-10 rounded-[2.5rem] border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-all"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mb-8 text-neutral-500 group-hover:text-white transition-colors">
-                  <Globe size={24} />
-                </div>
-                <p className="text-lg text-neutral-300 leading-relaxed">{card}</p>
-              </motion.div>
-            ))}
+            {ui.pressCards.map((card, idx) => {
+              const isInterview = idx === 0;
+              const isBlogReview = idx === 1;
+              const isEvent = idx === 2;
+              const isInteractive = isInterview || isBlogReview || isEvent;
+              
+              const handleClick = () => {
+                if (isInterview) setIsInterviewOpen(true);
+                if (isBlogReview) setIsBlogReviewOpen(true);
+                if (isEvent) setIsEventOpen(true);
+              };
+
+              let cardBgClasses = "border-slate-700/60 bg-[#0d1628]/75 hover:bg-[#121f3a]/85";
+              if (isInterview) {
+                cardBgClasses = "border-amber-500/40 bg-gradient-to-b from-[#131d35]/90 to-[#0c1426]/90 hover:border-amber-400/80 hover:bg-[#152342] hover:shadow-[0_15px_40px_rgba(245,158,11,0.18)] hover:-translate-y-1.5 cursor-pointer relative";
+              } else if (isBlogReview) {
+                cardBgClasses = "border-purple-500/40 bg-gradient-to-b from-[#181232]/90 to-[#0d1024]/90 hover:border-purple-400/80 hover:bg-[#1f1640] hover:shadow-[0_15px_40px_rgba(168,85,247,0.18)] hover:-translate-y-1.5 cursor-pointer relative";
+              } else if (isEvent) {
+                cardBgClasses = "border-cyan-500/40 bg-gradient-to-b from-[#0e1e36]/90 to-[#091224]/90 hover:border-cyan-400/80 hover:bg-[#112644] hover:shadow-[0_15px_40px_rgba(6,182,212,0.18)] hover:-translate-y-1.5 cursor-pointer relative";
+              }
+
+              return (
+                <motion.div 
+                  key={idx}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1 }}
+                  onClick={isInteractive ? handleClick : undefined}
+                  className={`group p-8 sm:p-10 rounded-[2.5rem] border backdrop-blur-xl transition-all shadow-xl flex flex-col justify-between ${cardBgClasses}`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-8">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${
+                        isInterview 
+                          ? "bg-amber-500/15 text-amber-400 group-hover:bg-amber-500 group-hover:text-black" 
+                          : isBlogReview
+                          ? "bg-purple-500/15 text-purple-300 group-hover:bg-purple-500 group-hover:text-white"
+                          : isEvent
+                          ? "bg-cyan-500/15 text-cyan-300 group-hover:bg-cyan-500 group-hover:text-black"
+                          : "bg-white/5 text-neutral-500 group-hover:text-white"
+                      }`}>
+                        {isInterview ? <Newspaper size={24} /> : isBlogReview ? <Star size={24} /> : isEvent ? <Calendar size={24} /> : <Globe size={24} />}
+                      </div>
+                      {isInterview && (
+                        <span className="text-[10px] uppercase tracking-widest font-mono font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm">
+                          {language === "es" ? "Exclusiva" : "Exclusive"}
+                        </span>
+                      )}
+                      {isBlogReview && (
+                        <span className="text-[10px] uppercase tracking-widest font-mono font-bold px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm flex items-center gap-1">
+                          <Sparkles size={11} />
+                          {language === "es" ? "Reseña 5/5" : "Review 5/5"}
+                        </span>
+                      )}
+                      {isEvent && (
+                        <span className="text-[10px] uppercase tracking-widest font-mono font-bold px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm flex items-center gap-1">
+                          <Calendar size={11} />
+                          9-11 Oct 2026
+                        </span>
+                      )}
+                    </div>
+                    {isEvent ? (
+                      <div className="space-y-3">
+                        <span className="text-xs uppercase font-mono tracking-widest text-cyan-400 font-bold block">
+                          {language === "es" ? "Próxima presentación" : "Upcoming event"}
+                        </span>
+                        <h3 className="text-lg sm:text-xl font-bold font-serif text-white tracking-tight">
+                          15.ª Primavera del Libro
+                        </h3>
+                        <div className="space-y-2 text-xs sm:text-sm text-neutral-300 pt-1">
+                          <p className="flex items-center gap-2">
+                            <Calendar size={14} className="text-cyan-400 flex-shrink-0" />
+                            <span className="font-medium">{language === "es" ? "Viernes 9, sábado 10 y domingo 11 de octubre de 2026" : "Friday 9, Saturday 10 & Sunday 11 October 2026"}</span>
+                          </p>
+                          <p className="flex items-center gap-2">
+                            <MapPin size={14} className="text-amber-400 flex-shrink-0" />
+                            <span>Centro Cultural Estación Mapocho, Santiago de Chile</span>
+                          </p>
+                          <p className="text-[11px] sm:text-xs text-neutral-400 font-mono pt-1">
+                            {language === "es" ? "Organización: Editoriales de Chile" : "Organized by: Editoriales de Chile"}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-base sm:text-lg text-neutral-200 leading-relaxed font-serif">
+                        {card}
+                      </p>
+                    )}
+                  </div>
+
+                  {isInterview && (
+                    <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between text-xs font-bold uppercase tracking-widest text-amber-400 group-hover:text-amber-300 transition-colors">
+                      <span className="flex items-center gap-2">
+                        <BookOpen size={15} />
+                        {language === "es" ? "Leer entrevista completa" : "Read full interview"}
+                      </span>
+                      <ArrowRight size={15} className="group-hover:translate-x-1.5 transition-transform" />
+                    </div>
+                  )}
+
+                  {isBlogReview && (
+                    <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between text-xs font-bold uppercase tracking-widest text-purple-300 group-hover:text-purple-200 transition-colors">
+                      <span className="flex items-center gap-2">
+                        <BookOpen size={15} />
+                        {language === "es" ? "Leer reseña completa" : "Read full review"}
+                      </span>
+                      <ArrowRight size={15} className="group-hover:translate-x-1.5 transition-transform" />
+                    </div>
+                  )}
+
+                  {isEvent && (
+                    <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between text-xs font-bold uppercase tracking-widest text-cyan-300 group-hover:text-cyan-200 transition-colors">
+                      <span className="flex items-center gap-2">
+                        <MapPin size={15} />
+                        {language === "es" ? "Ver detalles de la presentación" : "View event details"}
+                      </span>
+                      <ArrowRight size={15} className="group-hover:translate-x-1.5 transition-transform" />
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Reviews Section */}
-      <section id="resenas" className="mx-auto max-w-7xl px-6 py-16">
+      {/* SECCIÓN 5: RESEÑAS - Atmósfera: Noche de lluvia y suspense / Veredicto de lectores y crítica */}
+      <section id="resenas" className="relative py-28 overflow-hidden bg-[#060812] border-b border-slate-800/70">
+        {/* Fondo evocador transparente de thriller: Noche de lluvia y reflejos en asfalto */}
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+          <img 
+            src="https://images.unsplash.com/photo-1519692933481-e162a57d6721?auto=format&fit=crop&q=80&w=2000" 
+            alt="Rainy Night Thriller" 
+            className="w-full h-full object-cover object-center opacity-30 md:opacity-35 filter contrast-125 brightness-95"
+            referrerPolicy="no-referrer"
+          />
+          {/* Capa de contraste transparente para que sirva únicamente de fondo */}
+          <div className="absolute inset-0 bg-[#060812]/70" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#060812] via-transparent to-[#060812]" />
+        </div>
+
+        <div className="mx-auto max-w-7xl px-6 relative z-10">
         <motion.div 
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -1389,34 +1690,76 @@ function MainApp() {
           <p className="text-xs uppercase tracking-[0.5em] text-neutral-500 font-bold mb-4">{ui.reviewsEyebrow}</p>
           {ui.reviewsTitle && <h2 className="text-4xl font-bold md:text-6xl tracking-tight">{ui.reviewsTitle}</h2>}
         </motion.div>
-        <div className="grid gap-8 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 max-w-6xl mx-auto">
           {reviews.map((review, idx) => (
             <motion.div
               key={idx}
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.96 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-              className="relative p-10 rounded-[3rem] border border-white/5 bg-white/[0.02] flex flex-col items-center text-center"
+              transition={{ delay: idx * 0.1, duration: 0.5 }}
+              className="relative p-8 md:p-10 rounded-3xl border border-slate-700/60 bg-[#0d1529]/80 backdrop-blur-xl hover:bg-[#131f3c]/90 transition-colors flex flex-col justify-between shadow-2xl shadow-black/50"
             >
-              <div className="flex gap-1 mb-8 text-white/40">
-                {[...Array(5)].map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
-              </div>
-              <p className="text-xl font-medium text-neutral-200 leading-relaxed italic">
-                “{language === "es" ? review.es : review.en}”
-              </p>
-              <div className="mt-8 pt-8 border-t border-white/5 w-full">
-                <p className="text-[10px] uppercase tracking-[0.4em] text-neutral-600 font-black">
-                  {language === "es" ? "Lector de Amazon" : "Amazon Reader"}
+              <Quote size={36} className="text-white/[0.04] absolute top-8 right-8 pointer-events-none" />
+              <div>
+                <div className="flex items-center gap-1.5 mb-6 text-amber-400">
+                  {[...Array(review.stars)].map((_, i) => (
+                    <Star key={i} size={16} fill="currentColor" />
+                  ))}
+                  <span className="text-xs font-semibold text-amber-400/80 ml-2">5/5</span>
+                </div>
+                <p className="text-base md:text-lg font-normal text-neutral-200 leading-relaxed italic">
+                  “{language === "es" ? review.es : review.en}”
                 </p>
               </div>
+              <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
+                <div>
+                  <p className="text-sm md:text-base font-semibold text-white tracking-wide">
+                    {review.author}
+                  </p>
+                  <p className="text-xs text-neutral-500 font-medium mt-1">
+                    {language === "es" ? review.role.es : review.role.en}
+                  </p>
+                </div>
+                <span className="text-[11px] uppercase tracking-widest font-semibold text-amber-400/90 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20">
+                  ★★★★★
+                </span>
+              </div>
+
+              {review.author.includes("romanticoslibros") && (
+                <button
+                  type="button"
+                  onClick={() => setIsBlogReviewOpen(true)}
+                  className="mt-4 pt-3 border-t border-purple-500/20 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-purple-400 hover:text-purple-300 transition-colors w-full cursor-pointer"
+                >
+                  <span className="flex items-center gap-2">
+                    <BookOpen size={14} />
+                    {language === "es" ? "Leer reseña completa del blog" : "Read full blog review"}
+                  </span>
+                  <ArrowRight size={14} />
+                </button>
+              )}
             </motion.div>
           ))}
         </div>
+        </div>
       </section>
 
-      {/* Contact Section */}
-      <section id="contacto" className="relative py-16 bg-white/[0.01] border-t border-white/5 overflow-hidden">
+      {/* SECCIÓN 6: CONTACTO - Atmósfera: Despacho confidencial / correspondencia directa con el autor */}
+      <section id="contacto" className="relative py-28 overflow-hidden bg-[#05070d] border-b border-slate-800/70">
+        {/* Fondo evocador transparente de thriller: Escritorio de autor y notas a la luz tenue */}
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+          <img 
+            src="https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=2000" 
+            alt="Author Desk Thriller" 
+            className="w-full h-full object-cover object-center opacity-30 md:opacity-35 filter sepia-[0.25] contrast-125 brightness-95"
+            referrerPolicy="no-referrer"
+          />
+          {/* Capa de contraste transparente para que sirva únicamente de fondo */}
+          <div className="absolute inset-0 bg-[#05070d]/70" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#05070d] via-transparent to-[#05070d]" />
+        </div>
+
         <div className="mx-auto grid max-w-7xl gap-10 px-6 md:grid-cols-2 items-start relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -1483,7 +1826,7 @@ function MainApp() {
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="p-10 rounded-[3rem] border border-white/10 bg-neutral-950 shadow-2xl"
+            className="p-10 rounded-[3rem] border border-slate-700/60 bg-[#0c1425]/85 backdrop-blur-xl shadow-2xl shadow-black/60"
           >
             {isSent ? (
               <div className="h-full flex flex-col items-center justify-center text-center py-10 space-y-6">
@@ -1559,9 +1902,24 @@ function MainApp() {
         </div>
       </section>
 
-      {/* Newsletter Section */}
-      <section className="py-12 bg-white/[0.02] border-y border-white/5">
-        <div className="mx-auto max-w-3xl px-6 text-center">
+      {/* SECCIÓN 7: NEWSLETTER - Atmósfera: Círculo secreto de lectores de suspense */}
+      <section className="relative py-24 overflow-hidden bg-[#070a14] border-y border-amber-500/25">
+        {/* Fondo evocador transparente de thriller: Sendero nocturno en la bruma */}
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+          <img 
+            src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=2000" 
+            alt="Nocturnal Foggy Road Thriller" 
+            className="w-full h-full object-cover object-center opacity-30 md:opacity-35 filter contrast-125 brightness-95"
+            referrerPolicy="no-referrer"
+          />
+          {/* Capa de contraste transparente para que sirva únicamente de fondo */}
+          <div className="absolute inset-0 bg-[#070a14]/70" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#070a14] via-transparent to-[#070a14]" />
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
+        </div>
+
+        <div className="mx-auto max-w-3xl px-6 text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1667,13 +2025,13 @@ function MainApp() {
         )}
       </AnimatePresence>
 
-      {/* Footer */}
+      {/* FOOTER - Obsidiana y grafito elegante */}
       <motion.footer 
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 1 }}
-        className="border-t border-white/5 py-10 bg-black"
+        className="border-t border-slate-800/80 py-12 bg-[#05070d] text-neutral-400"
       >
         <div className="mx-auto max-w-7xl px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
@@ -1752,32 +2110,62 @@ function MainApp() {
           </div>
         </div>
       </motion.footer>
+      </div>
 
       {/* Synopsis Modal */}
       {selectedSynopsis && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm">
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md"
+          onClick={() => setSelectedSynopsis(null)}
+        >
           <motion.div 
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="relative w-full max-w-2xl bg-neutral-900 border border-white/10 p-8 md:p-12 rounded-[2.5rem] shadow-2xl overflow-y-auto max-h-[90vh]"
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-2xl bg-[#0d1424] border border-slate-700/80 p-6 sm:p-10 md:p-12 rounded-[2rem] shadow-2xl overflow-y-auto max-h-[90vh]"
           >
             <button 
               onClick={() => setSelectedSynopsis(null)}
-              className="absolute top-6 right-6 p-2 text-neutral-500 hover:text-white transition-colors"
+              className="absolute top-6 right-6 p-2 rounded-full bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
+              aria-label="Cerrar"
             >
-              <X size={24} />
+              <X size={20} />
             </button>
-            <div className="text-xs uppercase tracking-[0.5em] text-neutral-500 font-bold mb-4">{ui.synopsis}</div>
-            <h3 className="text-3xl md:text-5xl font-bold tracking-tight mb-8 font-serif">{selectedSynopsis.title}</h3>
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-[10px] uppercase tracking-[0.3em] text-amber-400 font-bold">
+                {language === "es" ? "Sinopsis Oficial" : "Official Synopsis"}
+              </span>
+              {selectedSynopsis.subtitle && (
+                <span className="text-[11px] text-neutral-400 font-medium border-l border-white/20 pl-3">
+                  {selectedSynopsis.subtitle}
+                </span>
+              )}
+            </div>
+            <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-6 font-serif text-white">
+              {selectedSynopsis.title}
+            </h3>
             <div className="prose prose-invert max-w-none">
-              <p className="text-lg md:text-xl text-neutral-300 leading-relaxed font-serif italic">
+              <p className="text-base sm:text-lg leading-relaxed font-serif text-neutral-300 whitespace-pre-line text-justify">
                 {selectedSynopsis.content || (language === "es" ? "Sinopsis no disponible." : "Synopsis not available.")}
               </p>
             </div>
-            <div className="mt-12 flex justify-end">
+            <div className="mt-8 pt-6 border-t border-white/10 flex flex-wrap items-center justify-between gap-4">
+              {selectedSynopsis.amazonLink ? (
+                <a
+                  href={selectedSynopsis.amazonLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-xs sm:text-sm font-bold text-neutral-950 hover:bg-neutral-200 transition-colors shadow-lg"
+                >
+                  <BookOpen size={16} />
+                  {language === "es" ? "Comprar en Amazon" : "Buy on Amazon"}
+                  <ExternalLink size={12} className="opacity-60" />
+                </a>
+              ) : <div />}
               <button 
                 onClick={() => setSelectedSynopsis(null)}
-                className="rounded-full bg-white px-8 py-4 text-sm font-bold text-neutral-950 hover:scale-105 transition-transform"
+                className="rounded-full border border-white/20 bg-white/10 px-6 py-3 text-xs sm:text-sm font-bold text-white hover:bg-white/20 transition-colors"
               >
                 {language === "es" ? "Cerrar" : "Close"}
               </button>
@@ -1785,6 +2173,27 @@ function MainApp() {
           </motion.div>
         </div>
       )}
+
+      {/* Exclusive Interview Modal */}
+      <InterviewModal 
+        isOpen={isInterviewOpen} 
+        onClose={() => setIsInterviewOpen(false)} 
+        language={language} 
+      />
+
+      {/* Featured Blog Review Modal */}
+      <BlogReviewModal
+        isOpen={isBlogReviewOpen}
+        onClose={() => setIsBlogReviewOpen(false)}
+        language={language}
+      />
+
+      {/* Upcoming Presentation / Event Modal */}
+      <EventModal
+        isOpen={isEventOpen}
+        onClose={() => setIsEventOpen(false)}
+        language={language}
+      />
     </div>
   );
 }

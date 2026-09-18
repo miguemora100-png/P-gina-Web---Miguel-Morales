@@ -45,6 +45,18 @@ service cloud.firestore {
              (!('spineColorEn' in data) || (data.spineColorEn is string && data.spineColorEn.size() < 10));
     }
 
+    function isValidMessage(data) {
+      return (data.keys().hasAll(['name', 'email', 'message'])) &&
+             (data.name is string && data.name.size() > 0 && data.name.size() <= 100) &&
+             (data.email is string && data.email.size() > 3 && data.email.size() <= 150) &&
+             (data.message is string && data.message.size() > 0 && data.message.size() <= 5000);
+    }
+
+    function isValidSubscriber(data) {
+      return (data.keys().hasAll(['email'])) &&
+             (data.email is string && data.email.size() > 3 && data.email.size() <= 150);
+    }
+
     match /author/profile {
       // Anyone can read the author profile
       allow read: if true;
@@ -60,6 +72,16 @@ service cloud.firestore {
         allow create, update: if isAdmin() && isValidBook(request.resource.data);
         allow delete: if isAdmin();
       }
+    }
+
+    match /messages/{messageId} {
+      allow create: if isValidMessage(request.resource.data);
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /subscribers/{subscriberId} {
+      allow create: if isValidSubscriber(request.resource.data);
+      allow read, delete: if isAdmin();
     }
 
     match /users/{userId} {
