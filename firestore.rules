@@ -57,6 +57,18 @@ service cloud.firestore {
              (data.email is string && data.email.size() > 3 && data.email.size() <= 150);
     }
 
+    function isValidVisit(data) {
+      return (data.keys().hasAll(['visitorId', 'language', 'device'])) &&
+             (data.visitorId is string && data.visitorId.size() > 0 && data.visitorId.size() <= 100) &&
+             (data.language is string && data.language.size() >= 2 && data.language.size() <= 10) &&
+             (data.device is string && data.device.size() > 0 && data.device.size() <= 30) &&
+             (!('browser' in data) || (data.browser is string && data.browser.size() <= 100)) &&
+             (!('os' in data) || (data.os is string && data.os.size() <= 100)) &&
+             (!('referrer' in data) || (data.referrer is string && data.referrer.size() <= 300)) &&
+             (!('path' in data) || (data.path is string && data.path.size() <= 150)) &&
+             (!('timestamp' in data) || data.timestamp is timestamp);
+    }
+
     match /author/profile {
       // Anyone can read the author profile
       allow read: if true;
@@ -82,6 +94,13 @@ service cloud.firestore {
     match /subscribers/{subscriberId} {
       allow create: if isValidSubscriber(request.resource.data);
       allow read, delete: if isAdmin();
+    }
+
+    match /visits/{visitId} {
+      // Anyone can log an anonymous visit
+      allow create: if isValidVisit(request.resource.data);
+      // ONLY the verified admin (author) can read, update, or delete visits
+      allow read, update, delete: if isAdmin();
     }
 
     match /users/{userId} {

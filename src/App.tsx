@@ -13,6 +13,10 @@ import { Book3DMockup } from "./components/Book3DMockup";
 import { InterviewModal } from "./components/InterviewModal";
 import { BlogReviewModal } from "./components/BlogReviewModal";
 import { EventModal } from "./components/EventModal";
+import { AnalyticsModal } from "./components/AnalyticsModal";
+import { AuthorAccessModal } from "./components/AuthorAccessModal";
+import { recordVisit, subscribeToVisits, VisitRecord } from "./utils/analytics";
+import { Activity, ShieldCheck, Lock, Eye, BarChart3, TrendingUp } from "lucide-react";
 
 // --- Firebase Error Handling ---
 enum OperationType {
@@ -177,6 +181,11 @@ function MainApp() {
   const [authorPhoto, setAuthorPhoto] = useState<string | null>("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400&h=400");
   const [publisherSeal, setPublisherSeal] = useState<string | null>(null);
   const [bookData, setBookData] = useState<Record<string, { coverUrl?: string; spineColor?: string; coverUrlEn?: string; spineColorEn?: string }>>({});
+  const [visits, setVisits] = useState<VisitRecord[]>([]);
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+  const [isAuthorAccessOpen, setIsAuthorAccessOpen] = useState(false);
+  const [showFloatingBadge, setShowFloatingBadge] = useState(true);
+  const [secretClicks, setSecretClicks] = useState(0);
 
   // Test connection to Firestore
   useEffect(() => {
@@ -413,6 +422,50 @@ function MainApp() {
   };
 
   const isAdmin = user?.email === "miguemora100@gmail.com";
+
+  // Automatically record anonymous page visit for author analytics
+  useEffect(() => {
+    recordVisit(language);
+  }, [language]);
+
+  // Real-time subscription to private visits (accessible only by admin)
+  useEffect(() => {
+    if (!isAdmin) {
+      setVisits([]);
+      return;
+    }
+
+    const unsubscribe = subscribeToVisits(
+      (data) => {
+        setVisits(data);
+      },
+      (error) => {
+        console.debug("Visits query info:", error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [isAdmin]);
+
+  // Private keyboard shortcut: Alt+V or Ctrl+Shift+V
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        (e.altKey && e.key.toLowerCase() === "v") ||
+        (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "v")
+      ) {
+        e.preventDefault();
+        if (isAdmin) {
+          setIsAnalyticsOpen((prev) => !prev);
+        } else {
+          setIsAuthorAccessOpen(true);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isAdmin]);
 
   const [selectedTrailer, setSelectedTrailer] = useState<string | null>(null);
 
@@ -771,10 +824,20 @@ function MainApp() {
               
               <div className="flex items-center gap-2">
                 {isAdmin && (
-                  <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-black uppercase tracking-widest text-emerald-400">
-                    <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                    Admin
-                  </div>
+                  <>
+                    <button 
+                      onClick={() => setIsAnalyticsOpen(true)}
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-400/50 transition-all text-[10px] font-bold tracking-wider shadow-[0_0_12px_rgba(6,182,212,0.15)] group"
+                      title={language === "es" ? "Analítica privada de visitas (Solo visible para ti)" : "Private visitor analytics (Visible only to you)"}
+                    >
+                      <Activity size={13} className="text-cyan-400 group-hover:scale-110 transition-transform animate-pulse" />
+                      <span>{visits.length} {language === "es" ? "visitas" : "visits"}</span>
+                    </button>
+                    <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-black uppercase tracking-widest text-emerald-400">
+                      <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                      Admin
+                    </div>
+                  </>
                 )}
                 {user ? (
                   <button 
@@ -786,9 +849,9 @@ function MainApp() {
                   </button>
                 ) : (
                   <button 
-                    onClick={handleLogin}
-                    className="p-2 text-neutral-400 hover:text-white transition-colors"
-                    title={language === "es" ? "Iniciar sesión" : "Login"}
+                    onClick={() => setIsAuthorAccessOpen(true)}
+                    className="p-2 text-neutral-400 hover:text-white transition-colors opacity-70 hover:opacity-100"
+                    title={language === "es" ? "Acceso de autor" : "Author login"}
                   >
                     <LogIn size={18} />
                   </button>
@@ -2101,9 +2164,43 @@ function MainApp() {
           </div>
 
           <div className="pt-4 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-[10px] text-neutral-700 uppercase tracking-widest">
-              © {new Date().getFullYear()} — All rights reserved
-            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  if (isAdmin) {
+                    setIsAnalyticsOpen(true);
+                  } else {
+                    const next = secretClicks + 1;
+                    if (next >= 3) {
+                      setSecretClicks(0);
+                      setIsAuthorAccessOpen(true);
+                    } else {
+                      setSecretClicks(next);
+                      setTimeout(() => setSecretClicks(0), 2500);
+                    }
+                  }
+                }}
+                className="text-[10px] text-neutral-700 uppercase tracking-widest hover:text-neutral-500 transition-colors text-left select-none cursor-default"
+                title={isAdmin ? "Abrir analítica privada de visitas" : undefined}
+              >
+                © {new Date().getFullYear()} — All rights reserved
+              </button>
+              {/* Discreet author lock button for private access */}
+              <button
+                onClick={() => {
+                  if (isAdmin) {
+                    setIsAnalyticsOpen(true);
+                  } else {
+                    setIsAuthorAccessOpen(true);
+                  }
+                }}
+                className="text-neutral-800 hover:text-neutral-500 transition-colors p-1"
+                title={isAdmin ? (language === "es" ? "Panel de visitas privadas" : "Private visits panel") : (language === "es" ? "Acceso autor" : "Author login")}
+                aria-label="Acceso privado"
+              >
+                <Lock size={10} />
+              </button>
+            </div>
             <div className="flex gap-6">
               <a href="#inicio" className="text-[10px] text-neutral-700 uppercase tracking-widest hover:text-white transition-colors">Top</a>
             </div>
@@ -2192,6 +2289,56 @@ function MainApp() {
       <EventModal
         isOpen={isEventOpen}
         onClose={() => setIsEventOpen(false)}
+        language={language}
+      />
+
+      {/* Floating Private Visits Icon (Visible ONLY to Admin Miguel Morales) */}
+      {isAdmin && showFloatingBadge && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 15 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 15 }}
+          className="fixed bottom-5 right-5 z-[90] flex items-center gap-1.5"
+        >
+          <button
+            onClick={() => setIsAnalyticsOpen(true)}
+            className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-[#0d1424]/95 hover:bg-[#121c33] border border-cyan-500/40 text-cyan-300 text-xs font-bold shadow-[0_8px_30px_rgba(0,0,0,0.6)] backdrop-blur-md transition-all hover:scale-105 group"
+            title={language === "es" ? "Estadísticas privadas de visitas (Solo visible para ti)" : "Private visitor statistics (Visible only to you)"}
+          >
+            <div className="relative flex items-center justify-center">
+              <Activity size={15} className="text-cyan-400 group-hover:rotate-12 transition-transform" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full animate-ping" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full" />
+            </div>
+            <span className="font-mono text-white text-xs tracking-tight font-bold">{visits.length}</span>
+            <span className="text-[10px] text-cyan-400/90 uppercase font-semibold">
+              {language === "es" ? "Visitas" : "Visits"}
+            </span>
+          </button>
+          <button
+            onClick={() => setShowFloatingBadge(false)}
+            className="p-1.5 rounded-full bg-black/60 text-neutral-400 hover:text-white border border-white/10 text-[9px] transition-colors"
+            title={language === "es" ? "Minimizar icono flotante (permanece en la cabecera)" : "Minimize floating icon"}
+            aria-label="Minimizar"
+          >
+            <X size={12} />
+          </button>
+        </motion.div>
+      )}
+
+      {/* Private Analytics Modal */}
+      <AnalyticsModal
+        isOpen={isAnalyticsOpen}
+        onClose={() => setIsAnalyticsOpen(false)}
+        visits={visits}
+        language={language}
+      />
+
+      {/* Private Author Access Modal */}
+      <AuthorAccessModal
+        isOpen={isAuthorAccessOpen}
+        onClose={() => setIsAuthorAccessOpen(false)}
+        onSuccess={() => setIsAnalyticsOpen(true)}
         language={language}
       />
     </div>

@@ -89,6 +89,47 @@
         }
       },
       "required": ["email"]
+    },
+    "visit": {
+      "title": "Page Visit",
+      "description": "Stores anonymous website visit logs for private author analytics.",
+      "type": "object",
+      "properties": {
+        "visitorId": {
+          "type": "string",
+          "description": "Anonymous unique visitor identifier."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the visit occurred."
+        },
+        "language": {
+          "type": "string",
+          "description": "Language chosen or browser locale (es, en)."
+        },
+        "device": {
+          "type": "string",
+          "description": "Device type (desktop, mobile, tablet)."
+        },
+        "browser": {
+          "type": "string",
+          "description": "Browser name."
+        },
+        "os": {
+          "type": "string",
+          "description": "Operating system."
+        },
+        "referrer": {
+          "type": "string",
+          "description": "Referrer URL or direct."
+        },
+        "path": {
+          "type": "string",
+          "description": "Visited page path or section."
+        }
+      },
+      "required": ["visitorId", "language", "device"]
     }
   },
   "firestore": {
@@ -107,6 +148,10 @@
     "/subscribers/{subscriberId}": {
       "schema": "subscriber",
       "description": "Newsletter email subscribers list."
+    },
+    "/visits/{visitId}": {
+      "schema": "visit",
+      "description": "Log of anonymous visitor page views for private author analytics."
     }
   }
 }
