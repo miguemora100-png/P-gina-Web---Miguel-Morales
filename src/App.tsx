@@ -15,6 +15,7 @@ import { BlogReviewModal } from "./components/BlogReviewModal";
 import { EventModal } from "./components/EventModal";
 import { AnalyticsModal } from "./components/AnalyticsModal";
 import { AuthorAccessModal } from "./components/AuthorAccessModal";
+import { AudioThemePlayer } from "./components/AudioThemePlayer";
 import { recordVisit, subscribeToVisits, VisitRecord } from "./utils/analytics";
 import { Activity, ShieldCheck, Lock, Eye, BarChart3, TrendingUp } from "lucide-react";
 
@@ -2340,6 +2341,12 @@ function MainApp() {
         onClose={() => setIsAuthorAccessOpen(false)}
         onSuccess={() => setIsAnalyticsOpen(true)}
         language={language}
+      />
+
+      {/* Official Ambient Music Player (Teddy Swims - Lose Control) */}
+      <AudioThemePlayer 
+        language={language} 
+        isExternalMediaPlaying={!!selectedTrailer} 
       />
     </div>
   );
