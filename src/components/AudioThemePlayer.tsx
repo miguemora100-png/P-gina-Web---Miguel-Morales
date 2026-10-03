@@ -5,11 +5,12 @@ interface AudioThemePlayerProps {
   isExternalMediaPlaying?: boolean;
 }
 
-const TEDDY_SWIMS_INFO = {
-  title: "Lose Control",
-  artist: "Teddy Swims",
-  youtubeVideoId: "GZ3zL7kT6_c", // Teddy Swims - Lose Control (Live)
-  fallbackAudioUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/9f/65/d6/9f65d67d-db40-d7da-c954-9a23d28dfe1a/mzaf_7625794503195542708.plus.aac.p.m4a",
+const SOUNDTRACK_INFO = {
+  title: "A Kaleidoscope of Mathematics",
+  artist: "James Horner",
+  album: "A Beautiful Mind (Original Motion Picture Soundtrack)",
+  youtubeVideoId: "cDEx6tolC6w", // James Horner - A Kaleidoscope of Mathematics
+  fallbackAudioUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/4e/a4/b0/4ea4b08d-76b9-6b26-081e-ae35c6e1cd3b/mzaf_11629656059712118579.plus.aac.p.m4a",
 };
 
 declare global {
@@ -20,7 +21,7 @@ declare global {
 }
 
 /**
- * Invisible Background Audio Component for Teddy Swims - Lose Control.
+ * Invisible Background Audio Component for "A Kaleidoscope of Mathematics" by James Horner.
  * Plays automatically when visitors enter and interact with the page,
  * without rendering any visible player UI on the screen.
  */
@@ -50,14 +51,14 @@ export const AudioThemePlayer: React.FC<AudioThemePlayerProps> = ({
           ytPlayerRef.current = new window.YT.Player("invisible-yt-audio-container", {
             height: "200",
             width: "200",
-            videoId: TEDDY_SWIMS_INFO.youtubeVideoId,
+            videoId: SOUNDTRACK_INFO.youtubeVideoId,
             playerVars: {
               autoplay: 1,
               controls: 0,
               disablekb: 1,
               fs: 0,
               loop: 1,
-              playlist: TEDDY_SWIMS_INFO.youtubeVideoId,
+              playlist: SOUNDTRACK_INFO.youtubeVideoId,
               modestbranding: 1,
               playsinline: 1,
               rel: 0,
@@ -220,7 +221,7 @@ export const AudioThemePlayer: React.FC<AudioThemePlayerProps> = ({
       {/* Invisible HTML5 Audio fallback element */}
       <audio
         ref={audioRef}
-        src={TEDDY_SWIMS_INFO.fallbackAudioUrl}
+        src={SOUNDTRACK_INFO.fallbackAudioUrl}
         loop
         preload="auto"
       />

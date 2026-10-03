@@ -2343,7 +2343,7 @@ function MainApp() {
         language={language}
       />
 
-      {/* Official Ambient Music Player (Teddy Swims - Lose Control) */}
+      {/* Official Ambient Music Player (James Horner - A Kaleidoscope of Mathematics) */}
       <AudioThemePlayer 
         language={language} 
         isExternalMediaPlaying={!!selectedTrailer} 
