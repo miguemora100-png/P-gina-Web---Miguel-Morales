@@ -18,6 +18,7 @@ import { AuthorAccessModal } from "./components/AuthorAccessModal";
 import { AudioThemePlayer } from "./components/AudioThemePlayer";
 import { recordVisit, subscribeToVisits, VisitRecord } from "./utils/analytics";
 import { Activity, ShieldCheck, Lock, Eye, BarChart3, TrendingUp } from "lucide-react";
+import { DEFAULT_AUTHOR_PHOTO, DEFAULT_PUBLISHER_SEAL } from "./assets/defaultAuthorPhoto";
 
 // --- Firebase Error Handling ---
 enum OperationType {
@@ -179,8 +180,28 @@ function MainApp() {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isSent, setIsSent] = useState(false);
-  const [authorPhoto, setAuthorPhoto] = useState<string | null>("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400&h=400");
-  const [publisherSeal, setPublisherSeal] = useState<string | null>(null);
+  const [authorPhoto, setAuthorPhoto] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("author_photo_cache");
+        if (cached) return cached;
+      } catch {
+        // ignore
+      }
+    }
+    return DEFAULT_AUTHOR_PHOTO;
+  });
+  const [publisherSeal, setPublisherSeal] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("publisher_seal_cache");
+        if (cached) return cached;
+      } catch {
+        // ignore
+      }
+    }
+    return DEFAULT_PUBLISHER_SEAL || null;
+  });
   const [bookData, setBookData] = useState<Record<string, { coverUrl?: string; spineColor?: string; coverUrlEn?: string; spineColorEn?: string }>>({});
   const [visits, setVisits] = useState<VisitRecord[]>([]);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
@@ -211,28 +232,38 @@ function MainApp() {
     return () => unsubscribe();
   }, []);
 
-  // Firestore Listener for Author Photo
+  // Firestore Listener for Author Photo (Immediate public access, cached for zero flicker)
   useEffect(() => {
-    if (!isAuthReady) return;
-
     const path = "author/profile";
     const unsubscribe = onSnapshot(doc(db, path), (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data();
-        setAuthorPhoto(data.photoUrl);
-        setPublisherSeal(data.publisherSealUrl);
+        if (data.photoUrl) {
+          setAuthorPhoto(data.photoUrl);
+          try {
+            localStorage.setItem("author_photo_cache", data.photoUrl);
+          } catch {
+            // ignore
+          }
+        }
+        if (data.publisherSealUrl) {
+          setPublisherSeal(data.publisherSealUrl);
+          try {
+            localStorage.setItem("publisher_seal_cache", data.publisherSealUrl);
+          } catch {
+            // ignore
+          }
+        }
       }
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, path);
     });
 
     return () => unsubscribe();
-  }, [isAuthReady]);
+  }, []);
 
-  // Firestore Listener for Book Covers
+  // Firestore Listener for Book Covers (Immediate public access)
   useEffect(() => {
-    if (!isAuthReady) return;
-
     const path = "books";
     const unsubscribe = onSnapshot(collection(db, path), (snapshot) => {
       const data: Record<string, { coverUrl?: string; spineColor?: string; coverUrlEn?: string; spineColorEn?: string }> = {};
@@ -251,7 +282,7 @@ function MainApp() {
     });
 
     return () => unsubscribe();
-  }, [isAuthReady]);
+  }, []);
 
   const handleLogin = async () => {
     const provider = new GoogleAuthProvider();
@@ -308,6 +339,11 @@ function MainApp() {
         
         // Optimistic update
         setAuthorPhoto(base64);
+        try {
+          localStorage.setItem("author_photo_cache", base64);
+        } catch {
+          // ignore
+        }
 
         const path = "author/profile";
         try {
@@ -333,6 +369,11 @@ function MainApp() {
         
         // Optimistic update
         setPublisherSeal(base64);
+        try {
+          localStorage.setItem("publisher_seal_cache", base64);
+        } catch {
+          // ignore
+        }
 
         const path = "author/profile";
         try {
@@ -792,7 +833,7 @@ function MainApp() {
           >
             <div className="group relative h-10 w-10 rounded-full overflow-hidden border border-white/10 bg-neutral-800 cursor-pointer">
               <img 
-                src={authorPhoto || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400&h=400"} 
+                src={authorPhoto || DEFAULT_AUTHOR_PHOTO} 
                 alt="Miguel Morales" 
                 className="h-full w-full object-cover"
                 referrerPolicy="no-referrer"
@@ -1146,7 +1187,7 @@ function MainApp() {
                   <div className="relative group/hero-author w-full max-w-[280px] sm:max-w-[320px]">
                     <div className="relative rounded-3xl overflow-hidden border border-white/15 bg-neutral-900 shadow-2xl drop-shadow-[0_25px_35px_rgba(0,0,0,0.85)]">
                       <img 
-                        src={authorPhoto || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400&h=400"} 
+                        src={authorPhoto || DEFAULT_AUTHOR_PHOTO} 
                         alt="Miguel Morales Moshiashvili"
                         className="w-full aspect-[4/5] object-cover transition-transform duration-700 group-hover/hero-author:scale-105"
                         referrerPolicy="no-referrer"
@@ -1466,7 +1507,7 @@ function MainApp() {
               <div className="absolute -inset-4 border border-white/10 rounded-[3rem] rotate-3" />
               <div className="relative h-full w-full rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-neutral-900">
                 <img 
-                  src={authorPhoto || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=800&h=800"} 
+                  src={authorPhoto || DEFAULT_AUTHOR_PHOTO} 
                   alt="Miguel Morales Moshiashvili" 
                   className="h-full w-full object-cover hover:scale-105 transition-all duration-700" 
                   referrerPolicy="no-referrer"
