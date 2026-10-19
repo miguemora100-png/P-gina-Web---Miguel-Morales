@@ -19,6 +19,7 @@ import { AudioThemePlayer } from "./components/AudioThemePlayer";
 import { recordVisit, subscribeToVisits, VisitRecord } from "./utils/analytics";
 import { Activity, ShieldCheck, Lock, Eye, BarChart3, TrendingUp } from "lucide-react";
 import { DEFAULT_AUTHOR_PHOTO, DEFAULT_PUBLISHER_SEAL } from "./assets/defaultAuthorPhoto";
+import { DEFAULT_BOOK_DATA } from "./assets/defaultBookData";
 
 // --- Firebase Error Handling ---
 enum OperationType {
@@ -202,7 +203,22 @@ function MainApp() {
     }
     return DEFAULT_PUBLISHER_SEAL || null;
   });
-  const [bookData, setBookData] = useState<Record<string, { coverUrl?: string; spineColor?: string; coverUrlEn?: string; spineColorEn?: string }>>({});
+  const [bookData, setBookData] = useState<Record<string, { coverUrl?: string; spineColor?: string; coverUrlEn?: string; spineColorEn?: string }>>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("book_data_cache");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && typeof parsed === "object") {
+            return { ...DEFAULT_BOOK_DATA, ...parsed };
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return DEFAULT_BOOK_DATA;
+  });
   const [visits, setVisits] = useState<VisitRecord[]>([]);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [isAuthorAccessOpen, setIsAuthorAccessOpen] = useState(false);
@@ -276,7 +292,15 @@ function MainApp() {
           spineColorEn: docData.spineColorEn
         };
       });
-      setBookData(data);
+      setBookData((prev) => {
+        const merged = { ...prev, ...data };
+        try {
+          localStorage.setItem("book_data_cache", JSON.stringify(merged));
+        } catch {
+          // ignore
+        }
+        return merged;
+      });
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, path);
     });
@@ -439,14 +463,22 @@ function MainApp() {
         const dominantColor = await extractDominantColor(base64);
         
         // Optimistic update
-        setBookData(prev => ({ 
-          ...prev, 
-          [bookId]: { 
-            ...prev[bookId],
-            [isEn ? 'coverUrlEn' : 'coverUrl']: base64, 
-            [isEn ? 'spineColorEn' : 'spineColor']: dominantColor 
-          } 
-        }));
+        setBookData(prev => {
+          const updated = { 
+            ...prev, 
+            [bookId]: { 
+              ...prev[bookId],
+              [isEn ? 'coverUrlEn' : 'coverUrl']: base64, 
+              [isEn ? 'spineColorEn' : 'spineColor']: dominantColor 
+            } 
+          };
+          try {
+            localStorage.setItem("book_data_cache", JSON.stringify(updated));
+          } catch {
+            // ignore
+          }
+          return updated;
+        });
 
         const path = `books/${bookId}`;
         try {
@@ -649,8 +681,8 @@ function MainApp() {
       noteEn: "Available in Kindle and paperback",
       link: "https://www.amazon.com/dp/B0GR1DZ5JC",
       linkEn: "https://www.amazon.com/dp/B0GSCGFBS8?dplnkId=f65997f5-f5e3-42ad-bc43-bc96204486b1&nodl=1",
-      image: "/el_senuelo_mockup.png",
-      imageEn: "/el_senuelo_mockup.png",
+      image: DEFAULT_BOOK_DATA["el-senuelo"]?.coverUrl || "/el_senuelo_mockup.png",
+      imageEn: DEFAULT_BOOK_DATA["el-senuelo"]?.coverUrlEn || "/el_senuelo_mockup.png",
       status: "new"
     },
     {
@@ -671,8 +703,8 @@ function MainApp() {
       noteEn: "Available in Kindle and paperback",
       link: "https://www.amazon.com/dp/B0H38TPVHL",
       linkEn: "https://www.amazon.com/dp/B0H38TPVHL",
-      image: "/el_efecto_strauss_mockup.png",
-      imageEn: "/el_efecto_strauss_mockup.png",
+      image: DEFAULT_BOOK_DATA["el-efecto-strauss"]?.coverUrl || "/el_efecto_strauss_mockup.png",
+      imageEn: DEFAULT_BOOK_DATA["el-efecto-strauss"]?.coverUrlEn || "/el_efecto_strauss_mockup.png",
       status: "new"
     },
   ];
@@ -1486,13 +1518,13 @@ function MainApp() {
         {/* Fondo evocador transparente de thriller: Bosque en la niebla nocturna */}
         <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
           <img 
-            src="https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&q=80&w=2000" 
+            src="https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&q=80&w=2000" 
             alt="Misty Forest Thriller" 
-            className="w-full h-full object-cover object-center opacity-30 md:opacity-35 filter contrast-125 brightness-95"
+            className="w-full h-full object-cover object-center opacity-45 md:opacity-50 filter contrast-125 brightness-105"
             referrerPolicy="no-referrer"
           />
           {/* Capa de contraste transparente para que sirva únicamente de fondo */}
-          <div className="absolute inset-0 bg-[#070911]/65" />
+          <div className="absolute inset-0 bg-[#070911]/50" />
           <div className="absolute inset-0 bg-gradient-to-b from-[#070911] via-transparent to-[#070911]" />
         </div>
 
